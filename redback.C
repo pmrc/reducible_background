@@ -75,15 +75,18 @@ void redback(TString FS = "4e", TString dataset = "DY50", TString EXTRA="")
   cout << "---> Open Fake Rates " << endl;
   //TFile* fFakeRates = TFile::Open(inputFileFakeRates.c_str());
  
+  cout << "---> Open Electron Fake Rates " << endl;
   TString file_electron ;
   if(EXTRA.Contains("incl")>0) file_electron = "RESULTS/output_FR_4eincl.root"; 
   else file_electron = "RESULTS/output_FR_4e.root"; 
   TFile * f_electron = TFile::Open(file_electron);
   
-  TString file_muon = "RESULTS/output_FR_4muMZ7.root";TFile * f_muon = TFile::Open(file_muon);
+  cout << "---> Open Muon Fake Rates " << endl;
+  TString file_muon = "RESULTS/output_FR_4mu.root";
+  TFile * f_muon = TFile::Open(file_muon);
   //
-  TGraph* h1D_FRmu_EB = (TGraph*)f_muon->Get("TG_Lep3_pT_all_EB_afterMET_76XMZ7");
-  TGraph* h1D_FRmu_EE = (TGraph*)f_muon->Get("TG_Lep3_pT_all_EE_afterMET_76XMZ7"); 
+  TGraph* h1D_FRmu_EB = (TGraph*)f_muon->Get("TG_Lep3_pT_all_EB_afterMET_76X");
+  TGraph* h1D_FRmu_EE = (TGraph*)f_muon->Get("TG_Lep3_pT_all_EE_afterMET_76X"); 
   //cout << "muon" << endl;
   double * fakemu_EB = new double[10]; fakemu_EB = h1D_FRmu_EB->GetY();
   //cout << "ee" << endl;

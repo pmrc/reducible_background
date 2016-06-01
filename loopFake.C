@@ -1,3 +1,7 @@
+//Created by Christophe Orchando
+//Modified by Pedro Cipriano
+
+
 // C/C++ include
 #include <vector>
 #include <string>
