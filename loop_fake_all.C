@@ -2,36 +2,46 @@
 
 void loop_fake_all()
 	{
+
+	loopFake("4e","ALL","ALL","76X");
+	loopFake("4e","ALL","VBF-2j","76X");
+	loopFake("4e","ALL","VH-hadronic","76X");
+	loopFake("4e","ALL","VH-leptonic","76X");
+	loopFake("4e","ALL","ttH","76X");
+	loopFake("4e","ALL","VBF-1j","76X");
+	loopFake("4e","ALL","untagged","76X");
+
+	/*
 	//4e 
-	loopFake("4e","ALL","76X");
-    	loopFake("4e","DY50","76X");
-    	loopFake("4e","TT","76X");
-	loopFake("4e","WZ","76X");
-	loopFake("4e","ZZ","76X");
+	loopFake("4e","ALL","ALL","76X");
+    	loopFake("4e","DY50","ALL","76X");
+    	loopFake("4e","TT","ALL","76X");
+	loopFake("4e","WZ","ALL","76X");
+	loopFake("4e","ZZ","ALL","76X");
 	//4e MZ10
-	loopFake("4e","ALL","76XMZ10");
-    	loopFake("4e","DY50","76XMZ10");
-    	loopFake("4e","TT","76XMZ10");
-	loopFake("4e","WZ","76XMZ10");
-	loopFake("4e","ZZ","76XMZ10");
+	loopFake("4e","ALL","ALL","76XMZ10");
+    	loopFake("4e","DY50","ALL","76XMZ10");
+    	loopFake("4e","TT","ALL","76XMZ10");
+	loopFake("4e","WZ","ALL","76XMZ10");
+	loopFake("4e","ZZ","ALL","76XMZ10");
 	//4e MZ7
-	loopFake("4e","ALL","76XMZ7");
-    	loopFake("4e","DY50","76XMZ7");
-    	loopFake("4e","TT","76XMZ7");
-	loopFake("4e","WZ","76XMZ7");
-	loopFake("4e","ZZ","76XMZ7");
+	loopFake("4e","ALL","ALL","76XMZ7");
+    	loopFake("4e","DY50","ALL","76XMZ7");
+    	loopFake("4e","TT","ALL","76XMZ7");
+	loopFake("4e","WZ","ALL","76XMZ7");
+	loopFake("4e","ZZ","ALL","76XMZ7");
 	//4e MZ60
-	loopFake("4e","ALL","76XMZ60");
-    	loopFake("4e","DY50","76XMZ60");
-    	loopFake("4e","TT","76XMZ60");
-	loopFake("4e","WZ","76XMZ60");
-	loopFake("4e","ZZ","76XMZ60");
+	loopFake("4e","ALL","ALL","76XMZ60");
+    	loopFake("4e","DY50","ALL","76XMZ60");
+    	loopFake("4e","TT","ALL","76XMZ60");
+	loopFake("4e","WZ","ALL","76XMZ60");
+	loopFake("4e","ZZ","ALL","76XMZ60");
 	//4e M3L5
-	loopFake("4e","ALL","76XM3L5");
-    	loopFake("4e","DY50","76XM3L5");
-    	loopFake("4e","TT","76XM3L5");
-	loopFake("4e","WZ","76XM3L5");
-	loopFake("4e","ZZ","76XM3L5");
+	loopFake("4e","ALL","ALL","76XM3L5");
+    	loopFake("4e","DY50","ALL","76XM3L5");
+    	loopFake("4e","TT","ALL","76XM3L5");
+	loopFake("4e","WZ","ALL","76XM3L5");
+	loopFake("4e","ZZ","ALL","76XM3L5");
 
 	//4mu
 	loopFake("4mu","ALL","76X");
@@ -126,5 +136,6 @@ void loop_fake_all()
     	loopFake("2mu2e","TT","76XM3L5");
 	loopFake("2mu2e","WZ","76XM3L5");
 	loopFake("2mu2e","ZZ","76XM3L5");
+	*/
 	}
 

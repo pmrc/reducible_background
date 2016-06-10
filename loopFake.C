@@ -14,7 +14,9 @@
 #include <TFile.h>
 #include <TLorentzVector.h>
 
-#include "/home/llr/cms/ochando/CJLST/CMSSW_7416p1_ZX/src/ZZAnalysis/AnalysisStep/interface/FinalStates.h"
+#include "/home/llr/cms/cipriano/CMSSW_7_6_3_patch2/src/ZZAnalysis/AnalysisStep/src/Category.cc"
+
+#include "/home/llr/cms/cipriano/CMSSW_7_6_3_patch2/src/ZZAnalysis/AnalysisStep/interface/FinalStates.h"
 //#include "/home/llr/cms/ochando/CJLST/CMSSW_7416p1_ZX/src/ZZAnalysis/AnalysisStep/interface/bitops.h"
 
 using namespace std;
@@ -24,14 +26,21 @@ bool test_bit( int mask, unsigned int iBit ) {
 }
 
 // ========================================================================================================================
-void loopFake(TString FS = "4e", TString dataset = "ALL", TString EXTRA="76X")
+void loopFake(TString FS = "4e", TString dataset = "ALL", TString cat = "ALL", TString EXTRA="76X")
 // ========================================================================================================================
 {
-  cout << "---> Working with Final State: " << FS << endl;
+  cout << "---> Working with Final State:       " << FS << endl;
+  cout << "---> Working with Dataset:           " << dataset << endl;
+  cout << "---> Working with Category:          " << cat << endl;
+  cout << "---> Working with Extra definitions: " << EXTRA << endl;
 
   if( (FS!="4e") && (FS!="4mu")  && (FS!="2e2mu") &&  (FS!="2mu2e") )
     { cout << " ERROR ! FinalState should be 4e, 4mu, 2e2mu or 2mu2e" << endl; return; }
   
+  if( (cat!="ALL") && (cat != "untagged") && (cat != "VBF-1j") && (cat != "ttH") && (cat != "VH-leptonic") && (cat != "VH-hadronic") && (cat != "VBF-2j"))
+    { cout << " ERROR ! The category should be ALL, untagged, VBF-1j, ttH, VH-leptonic, VH-hadronic or VBF-2j" << endl; return; }
+
+
   float lumi = 2.6; 
   cout << "---> Working with : " << lumi << " fb-1"  << endl;
   
@@ -54,7 +63,7 @@ void loopFake(TString FS = "4e", TString dataset = "ALL", TString EXTRA="76X")
   // ------------------------------------------------
   // OutPut File
   // ------------------------------------------------
-  TString outputfile_name = "out/outputCRZL_"+dataset+"_"+FS+"_"+EXTRA+".root";
+  TString outputfile_name = "out/outputCRZL_"+dataset+"_"+FS+"_"+cat+"_"+EXTRA+".root";
   TFile * OutputFile;
   OutputFile = new TFile(outputfile_name, "RECREATE"); //, "", 5);
   cout << "Outputing the result to " << outputfile_name << "..." << endl;
@@ -65,10 +74,10 @@ void loopFake(TString FS = "4e", TString dataset = "ALL", TString EXTRA="76X")
   TFile* myfile;
 
   //myfile = new TFile("/data_CMS/cms/ochando/CJLSTReducedTree/151202/DoubleEG2015D/ZZ4lAnalysis.root");
-  //myfile = new TFile("/data_CMS/cms/ochando/CJLSTReducedTree/160111_ggZZincomplete/"+dataflag+"/ZZ4lAnalysis.root");
+  myfile = new TFile("/data3/Higgs/160225/ggH125/ZZ4lAnalysis.root");
   TString ntuple = "/data_CMS/cms/ochando/CJLSTReducedTree/160212/"+dataflag+"/ZZ4lAnalysis.root";
   cout << "Reading " << ntuple << "..." << endl;
-  myfile = new TFile(ntuple);
+  //myfile = new TFile(ntuple);
 
   TString name_tree;
   name_tree  = "CRZLTree/candTree";
@@ -104,6 +113,8 @@ void loopFake(TString FS = "4e", TString dataset = "ALL", TString EXTRA="76X")
   Float_t         Z2Mass;
   Float_t         Z2Pt;
   Short_t         Z2Flav;
+  Short_t         nExtraLep;
+  Short_t	  nExtraZ;
   vector<float>   *LepPt;
   vector<float>   *LepEta;
   vector<float>   *LepPhi;
@@ -123,6 +134,13 @@ void loopFake(TString FS = "4e", TString dataset = "ALL", TString EXTRA="76X")
   vector<float>   *JetSigma;
   Float_t         overallEventWeight;
   Float_t         xsec;
+  Float_t         pwh_hadronic_VAJHU;
+  Float_t         phj_VAJHU;
+  Float_t         phjj_VAJHU_old;
+  Float_t         pvbf_VAJHU_old;
+  Float_t         pAux_vbf_VAJHU;
+  Float_t         pzh_hadronic_VAJHU;
+
 
   TBranch        *b_RunNumber;   //!
   TBranch        *b_EventNumber;   //!
@@ -152,6 +170,8 @@ void loopFake(TString FS = "4e", TString dataset = "ALL", TString EXTRA="76X")
   TBranch        *b_Z2Mass;   //!
   TBranch        *b_Z2Pt;   //!
   TBranch        *b_Z2Flav;   //!
+  TBranch        *b_nExtraLep;   //!
+  TBranch        *b_nExtraZ;  //categories
   TBranch        *b_LepPt;   //!
   TBranch        *b_LepEta;   //!
   TBranch        *b_LepPhi;   //!
@@ -171,6 +191,13 @@ void loopFake(TString FS = "4e", TString dataset = "ALL", TString EXTRA="76X")
   TBranch        *b_JetSigma;   //!
   TBranch        *b_overallEventWeight;   //!
   TBranch        *b_xsec;   //!
+  TBranch        *b_pwh_hadronic_VAJHU; //categories
+  TBranch        *b_phj_VAJHU;  //categories
+  TBranch        *b_phjj_VAJHU_old;  //categories
+  TBranch        *b_pvbf_VAJHU_old;  //categories
+  TBranch        *b_pAux_vbf_VAJHU;  //categories
+  TBranch        *b_pzh_hadronic_VAJHU;  //categories
+
 
   // Set object pointer
   LepPt = 0;
@@ -216,6 +243,8 @@ void loopFake(TString FS = "4e", TString dataset = "ALL", TString EXTRA="76X")
   mytree->SetBranchAddress("Z2Mass", &Z2Mass, &b_Z2Mass);
   mytree->SetBranchAddress("Z2Pt", &Z2Pt, &b_Z2Pt);
   mytree->SetBranchAddress("Z2Flav", &Z2Flav, &b_Z2Flav);
+  mytree->SetBranchAddress("nExtraLep", &nExtraLep, &b_nExtraLep);
+  mytree->SetBranchAddress("nExtraZ", &nExtraZ, &b_nExtraZ);
   mytree->SetBranchAddress("LepPt", &LepPt, &b_LepPt);
   mytree->SetBranchAddress("LepEta", &LepEta, &b_LepEta);
   mytree->SetBranchAddress("LepPhi", &LepPhi, &b_LepPhi);
@@ -235,6 +264,14 @@ void loopFake(TString FS = "4e", TString dataset = "ALL", TString EXTRA="76X")
   mytree->SetBranchAddress("JetSigma", &JetSigma, &b_JetSigma);
   mytree->SetBranchAddress("overallEventWeight", &overallEventWeight, &b_overallEventWeight);
   mytree->SetBranchAddress("xsec", &xsec, &b_xsec);
+  mytree->SetBranchAddress("pwh_hadronic_VAJHU", &pwh_hadronic_VAJHU, &b_pwh_hadronic_VAJHU);
+  mytree->SetBranchAddress("phj_VAJHU", &phj_VAJHU, &b_phj_VAJHU);
+  mytree->SetBranchAddress("phjj_VAJHU_old", &phjj_VAJHU_old, &b_phjj_VAJHU_old);
+  mytree->SetBranchAddress("pvbf_VAJHU_old", &pvbf_VAJHU_old, &b_pvbf_VAJHU_old);
+  mytree->SetBranchAddress("pAux_vbf_VAJHU", &pAux_vbf_VAJHU, &b_pAux_vbf_VAJHU);
+  mytree->SetBranchAddress("pzh_hadronic_VAJHU", &pzh_hadronic_VAJHU, &b_pzh_hadronic_VAJHU);
+
+
 
   // ===============================================================
   //   Definition of some Histos
@@ -299,7 +336,7 @@ void loopFake(TString FS = "4e", TString dataset = "ALL", TString EXTRA="76X")
       TString pTbin2 = Form("%.0f",xbins[ipt+1]);
 			   
       h_Lep3_mhits[iloc][ipt] = new TH1F("Lep3_mhits_"+loc[iloc]+"_pT"+pTbin1+pTbin2, "Lep3_mhits_"+loc[iloc]+"_pT"+pTbin1+pTbin2, 5, 0, 5);
-      cout <<"pt = " << pTbin1 << " " << pTbin2 << endl;
+      //cout <<"pt = " << pTbin1 << " " << pTbin2 << endl;
     } // for loop on pT
   } // for loop on location
 
@@ -360,7 +397,7 @@ void loopFake(TString FS = "4e", TString dataset = "ALL", TString EXTRA="76X")
     //cout << "i   = " << iEvt << endl;
     //mytree->LoadTree(iEvt);
     float_t percent = iEvt * 100 / MAX; 
-    if (iEvt % 10000 == 0 && iEvt > 0) cout<< "Loop: processing event  " << iEvt << " (" << percent << "%)" << endl;     
+    if (iEvt % 100000 == 0 && iEvt > 0) cout<< "Loop: processing event  " << iEvt << " (" << percent << "%)" << endl;     
     
     mytree->GetEntry(iEvt);
     
@@ -422,6 +459,8 @@ void loopFake(TString FS = "4e", TString dataset = "ALL", TString EXTRA="76X")
 
     if(passpT==false) continue; cutdes[icut] = "20/10"; ICUT->Fill((Float_t)icut,WEIGHT); icut++;  
 
+
+
     // ===========================================
     // MZ cuts
     // ===========================================
@@ -458,6 +497,94 @@ void loopFake(TString FS = "4e", TString dataset = "ALL", TString EXTRA="76X")
       if( fabs(m3l.M() - 91.2) < 5)  passMZ = true;
       if(passMZ==false) continue; cutdes[icut] = "|M3l-91.2|<5"; ICUT->Fill((Float_t)icut,WEIGHT); icut++;  
     } 
+
+
+    // ===========================================
+    // Categories
+    // ===========================================
+
+    //QGLikelihood vector first has to be converted to a C++ array
+    cout << "nCleanedJetsPt30 = " <<  nCleanedJetsPt30 << endl;
+    cout << "JetQGLikelihood->size() = " <<  JetQGLikelihood->size() << endl;
+
+    Float_t jetQGL[nCleanedJetsPt30];
+    for(int j=0; j<nCleanedJetsPt30; j++)
+	{
+	cout << "j = " << j << endl;
+	jetQGL[j] = JetQGLikelihood->at(j);
+	}
+
+
+    int cate = -1;
+    cout << "here - " <<  cate << endl;
+    cate = categoryIchep16(nExtraLep, nExtraZ, nCleanedJetsPt30, nCleanedJetsPt30BTagged, jetQGL, phjj_VAJHU_old, phj_VAJHU, pvbf_VAJHU_old, pAux_vbf_VAJHU, pwh_hadronic_VAJHU, pzh_hadronic_VAJHU);
+
+
+    bool passcat = false;
+
+    if(cat == "ALL")
+	{
+	if (cate > -1) passcat = true;
+	if(passcat == false) continue;
+	cutdes[icut] = "All categories";
+	ICUT->Fill((Float_t)icut,WEIGHT);
+	icut++;  
+	}
+
+    if(cat == "VBF-2j")
+	{
+	if (cate == 2) passcat = true;
+	if(passcat == false) continue;
+	cutdes[icut] = "VBF-2j category";
+	ICUT->Fill((Float_t)icut,WEIGHT);
+	icut++;  
+	}
+
+    if(cat == "VH-hadronic")
+	{
+	if (cate == 4) passcat = true;
+	if(passcat == false) continue;
+	cutdes[icut] = "VH-hadronic category";
+	ICUT->Fill((Float_t)icut,WEIGHT);
+	icut++;  
+	}
+
+    if(cat == "VH-leptonic")
+	{
+	if (cate == 3) passcat = true;
+	if(passcat == false) continue;
+	cutdes[icut] = "VH-leptonic category";
+	ICUT->Fill((Float_t)icut,WEIGHT);
+	icut++;  
+	}
+
+    if(cat == "ttH")
+	{
+	if (cate == 5) passcat = true;
+	if(passcat == false) continue;
+	cutdes[icut] = "ttH category";
+	ICUT->Fill((Float_t)icut,WEIGHT);
+	icut++;  
+	}
+
+    if(cat == "VBF-1j")
+	{
+	if (cate == 1) passcat = true;
+	if(passcat == false) continue;
+	cutdes[icut] = "VBF-1j category";
+	ICUT->Fill((Float_t)icut,WEIGHT);
+	icut++;  
+	}
+
+    if(cat == "untagged")
+	{
+	if (cate == 0) passcat = true;
+	if(passcat == false) continue;
+	cutdes[icut] = "untagged category";
+	ICUT->Fill((Float_t)icut,WEIGHT);
+	icut++;  
+	}
+
 
     // ===========================================
     // Analysis
