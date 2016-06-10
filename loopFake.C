@@ -14,9 +14,7 @@
 #include <TFile.h>
 #include <TLorentzVector.h>
 
-#include "/home/llr/cms/cipriano/CMSSW_7_6_3_patch2/src/ZZAnalysis/AnalysisStep/src/Category.cc"
-
-#include "/home/llr/cms/cipriano/CMSSW_7_6_3_patch2/src/ZZAnalysis/AnalysisStep/interface/FinalStates.h"
+#include "ZZAnalysis/AnalysisStep/interface/FinalStates.h"
 //#include "/home/llr/cms/ochando/CJLST/CMSSW_7416p1_ZX/src/ZZAnalysis/AnalysisStep/interface/bitops.h"
 
 using namespace std;
@@ -26,19 +24,16 @@ bool test_bit( int mask, unsigned int iBit ) {
 }
 
 // ========================================================================================================================
-void loopFake(TString FS = "4e", TString dataset = "ALL", TString cat = "ALL", TString EXTRA="76X")
+void loopFake(TString FS = "4e", TString dataset = "ALL", TString branch = "CRZL", TString EXTRA="76X")
 // ========================================================================================================================
 {
   cout << "---> Working with Final State:       " << FS << endl;
   cout << "---> Working with Dataset:           " << dataset << endl;
-  cout << "---> Working with Category:          " << cat << endl;
+  cout << "---> Working with Branch:            " << branch << endl;
   cout << "---> Working with Extra definitions: " << EXTRA << endl;
 
-  if( (FS!="4e") && (FS!="4mu")  && (FS!="2e2mu") &&  (FS!="2mu2e") )
+  if( (FS!="4e") && (FS!="4mu") && (FS!="2e2mu") && (FS!="2mu2e") )
     { cout << " ERROR ! FinalState should be 4e, 4mu, 2e2mu or 2mu2e" << endl; return; }
-  
-  if( (cat!="ALL") && (cat != "untagged") && (cat != "VBF-1j") && (cat != "ttH") && (cat != "VH-leptonic") && (cat != "VH-hadronic") && (cat != "VBF-2j"))
-    { cout << " ERROR ! The category should be ALL, untagged, VBF-1j, ttH, VH-leptonic, VH-hadronic or VBF-2j" << endl; return; }
 
 
   float lumi = 2.6; 
@@ -63,7 +58,7 @@ void loopFake(TString FS = "4e", TString dataset = "ALL", TString cat = "ALL", T
   // ------------------------------------------------
   // OutPut File
   // ------------------------------------------------
-  TString outputfile_name = "out/outputCRZL_"+dataset+"_"+FS+"_"+cat+"_"+EXTRA+".root";
+  TString outputfile_name = "histograms/FR/" + FS + "/FR_"+branch+"_"+dataset+"_"+EXTRA+".root";
   TFile * OutputFile;
   OutputFile = new TFile(outputfile_name, "RECREATE"); //, "", 5);
   cout << "Outputing the result to " << outputfile_name << "..." << endl;
@@ -71,17 +66,16 @@ void loopFake(TString FS = "4e", TString dataset = "ALL", TString cat = "ALL", T
   // ------------------------------------------------
   // load the tree 
   // ------------------------------------------------
-  TFile* myfile;
-
-  //myfile = new TFile("/data_CMS/cms/ochando/CJLSTReducedTree/151202/DoubleEG2015D/ZZ4lAnalysis.root");
-  myfile = new TFile("/data3/Higgs/160225/ggH125/ZZ4lAnalysis.root");
-  TString ntuple = "/data_CMS/cms/ochando/CJLSTReducedTree/160212/"+dataflag+"/ZZ4lAnalysis.root";
+  TFile *myfile;
+  //myfile = TFile::Open("root://lxcms03//data3/Higgs/160225/ggH125/ZZ4lAnalysis.root");
+  //cout << "Opening file!" << endl;
+  TString ntuple = "root://lxcms03//data3/Higgs/160225/"+dataflag+"/ZZ4lAnalysis.root";
   cout << "Reading " << ntuple << "..." << endl;
-  //myfile = new TFile(ntuple);
+  myfile = TFile::Open(ntuple);
 
+  //cout << "Loading Trees!" << endl;
   TString name_tree;
-  name_tree  = "CRZLTree/candTree";
-  //name_tree = "CRZLLTree/candTree";
+  name_tree  = branch+"Tree/candTree";
 
   TTree * mytree = (TTree*)myfile->Get(name_tree);
 
@@ -397,7 +391,7 @@ void loopFake(TString FS = "4e", TString dataset = "ALL", TString cat = "ALL", T
     //cout << "i   = " << iEvt << endl;
     //mytree->LoadTree(iEvt);
     float_t percent = iEvt * 100 / MAX; 
-    if (iEvt % 100000 == 0 && iEvt > 0) cout<< "Loop: processing event  " << iEvt << " (" << percent << "%)" << endl;     
+    if (iEvt % 10000 == 0 && iEvt > 0) cout<< "Loop: processing event  " << iEvt << " (" << percent << "%)" << endl;     
     
     mytree->GetEntry(iEvt);
     
@@ -497,93 +491,6 @@ void loopFake(TString FS = "4e", TString dataset = "ALL", TString cat = "ALL", T
       if( fabs(m3l.M() - 91.2) < 5)  passMZ = true;
       if(passMZ==false) continue; cutdes[icut] = "|M3l-91.2|<5"; ICUT->Fill((Float_t)icut,WEIGHT); icut++;  
     } 
-
-
-    // ===========================================
-    // Categories
-    // ===========================================
-
-    //QGLikelihood vector first has to be converted to a C++ array
-    cout << "nCleanedJetsPt30 = " <<  nCleanedJetsPt30 << endl;
-    cout << "JetQGLikelihood->size() = " <<  JetQGLikelihood->size() << endl;
-
-    Float_t jetQGL[nCleanedJetsPt30];
-    for(int j=0; j<nCleanedJetsPt30; j++)
-	{
-	cout << "j = " << j << endl;
-	jetQGL[j] = JetQGLikelihood->at(j);
-	}
-
-
-    int cate = -1;
-    cout << "here - " <<  cate << endl;
-    cate = categoryIchep16(nExtraLep, nExtraZ, nCleanedJetsPt30, nCleanedJetsPt30BTagged, jetQGL, phjj_VAJHU_old, phj_VAJHU, pvbf_VAJHU_old, pAux_vbf_VAJHU, pwh_hadronic_VAJHU, pzh_hadronic_VAJHU);
-
-
-    bool passcat = false;
-
-    if(cat == "ALL")
-	{
-	if (cate > -1) passcat = true;
-	if(passcat == false) continue;
-	cutdes[icut] = "All categories";
-	ICUT->Fill((Float_t)icut,WEIGHT);
-	icut++;  
-	}
-
-    if(cat == "VBF-2j")
-	{
-	if (cate == 2) passcat = true;
-	if(passcat == false) continue;
-	cutdes[icut] = "VBF-2j category";
-	ICUT->Fill((Float_t)icut,WEIGHT);
-	icut++;  
-	}
-
-    if(cat == "VH-hadronic")
-	{
-	if (cate == 4) passcat = true;
-	if(passcat == false) continue;
-	cutdes[icut] = "VH-hadronic category";
-	ICUT->Fill((Float_t)icut,WEIGHT);
-	icut++;  
-	}
-
-    if(cat == "VH-leptonic")
-	{
-	if (cate == 3) passcat = true;
-	if(passcat == false) continue;
-	cutdes[icut] = "VH-leptonic category";
-	ICUT->Fill((Float_t)icut,WEIGHT);
-	icut++;  
-	}
-
-    if(cat == "ttH")
-	{
-	if (cate == 5) passcat = true;
-	if(passcat == false) continue;
-	cutdes[icut] = "ttH category";
-	ICUT->Fill((Float_t)icut,WEIGHT);
-	icut++;  
-	}
-
-    if(cat == "VBF-1j")
-	{
-	if (cate == 1) passcat = true;
-	if(passcat == false) continue;
-	cutdes[icut] = "VBF-1j category";
-	ICUT->Fill((Float_t)icut,WEIGHT);
-	icut++;  
-	}
-
-    if(cat == "untagged")
-	{
-	if (cate == 0) passcat = true;
-	if(passcat == false) continue;
-	cutdes[icut] = "untagged category";
-	ICUT->Fill((Float_t)icut,WEIGHT);
-	icut++;  
-	}
 
 
     // ===========================================
@@ -775,7 +682,7 @@ void loopFake(TString FS = "4e", TString dataset = "ALL", TString cat = "ALL", T
   cout << "icut_max = " << icut_MAX << endl;
   //if(icut_MAX<2) icut_MAX = 30;
   cout << "======================================================================" << endl;
-  for ( Int_t i=0; i<icut_MAX+1 ; i++ )
+  for ( Int_t i=0; i<8 ; i++ )
     cout << "Cut " << setw(3) << i << " : " << setw(30) << cutdes[i] << " : " << ICUT->GetBinContent(i+1) << endl;
   //cout << "Cut " << i << " : " << ICUT->GetBinContent(i) << endl;
   cout << "======================================================================" << endl;
@@ -817,6 +724,7 @@ void loopFake(TString FS = "4e", TString dataset = "ALL", TString cat = "ALL", T
   OutputFile->Write();
   OutputFile->Close();
   
-  cout << "---> OutPut File: "  << outputfile_name << endl;
-
+  cout << "---> Writing to file: "  << outputfile_name << endl;
+  cout << "---> Done! " << endl;
+  cout << " " << endl;
 }

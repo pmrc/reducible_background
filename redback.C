@@ -14,7 +14,9 @@
 #include <TTree.h>
 #include <TBranch.h>
 
-#include "/home/llr/cms/ochando/CJLST/CMSSW_7416p1_ZX/src/ZZAnalysis/AnalysisStep/interface/FinalStates.h"
+#include "ZZAnalysis/AnalysisStep/src/Category.cc"
+
+#include "ZZAnalysis/AnalysisStep/interface/FinalStates.h"
 //#include "/home/llr/cms/ochando/CJLST/CMSSW_7416p1_ZX/src/ZZAnalysis/AnalysisStep/interface/bitops.h"
 
 using namespace std;
@@ -39,7 +41,7 @@ int findBin(double LepPt, double LepId) {
 }
 
 // ========================================================================================================================
-void redback(TString FS = "4e", TString dataset = "DY50", TString EXTRA="")
+void redback(TString FS = "4e", TString dataset = "ALL", TString cat = "ALL", TString EXTRA="")
 // ========================================================================================================================
 {
   cout << "---> Working with Final State: " << FS << endl;
@@ -47,6 +49,11 @@ void redback(TString FS = "4e", TString dataset = "DY50", TString EXTRA="")
   if( (FS!="4e") && (FS!="4mu")  && (FS!="2e2mu") &&  (FS!="2mu2e") )
     { cout << " ERROR ! FinalState should be 4e, 4mu, 2e2mu or 2mu2e" << endl; return; }
   
+
+  if( (cat!="ALL") && (cat != "untagged") && (cat != "VBF-1j") && (cat != "ttH") && (cat != "VH-leptonic") && (cat != "VH-hadronic") && (cat != "VBF-2j"))
+    { cout << " ERROR ! The category should be ALL, untagged, VBF-1j, ttH, VH-leptonic, VH-hadronic or VBF-2j" << endl; return; }
+
+
   float lumi = 2.6; 
   cout << "---> Working with : " << lumi << " fb-1"  << endl;
   
@@ -118,7 +125,9 @@ void redback(TString FS = "4e", TString dataset = "DY50", TString EXTRA="")
 
   //myfile = new TFile("/data_CMS/cms/ochando/CJLSTReducedTree/151202/DoubleEG2015D/ZZ4lAnalysis.root");
   //myfile = new TFile("/data_CMS/cms/ochando/CJLSTReducedTree/160111_ggZZincomplete/"+dataflag+"/ZZ4lAnalysis.root");
-  myfile = new TFile("/data_CMS/cms/ochando/CJLSTReducedTree/160212/"+dataflag+"/ZZ4lAnalysis.root");
+  TString ntuple = "root://lxcms03//data3/Higgs/160225/"+dataflag+"/ZZ4lAnalysis.root";
+  cout << "Reading " << ntuple << "..." << endl;
+  myfile = TFile::Open(ntuple);
 
   TString name_tree;
   //name_tree  = "CRZLTree/crTree";
@@ -172,6 +181,12 @@ void redback(TString FS = "4e", TString dataset = "DY50", TString EXTRA="")
   vector<float>   *JetSigma;
   Float_t         overallEventWeight;
   Float_t         xsec;
+  Float_t         pwh_hadronic_VAJHU;
+  Float_t         phj_VAJHU;
+  Float_t         phjj_VAJHU_old;
+  Float_t         pvbf_VAJHU_old;
+  Float_t         pAux_vbf_VAJHU;
+  Float_t         pzh_hadronic_VAJHU;
 
   TBranch        *b_RunNumber;   //!
   TBranch        *b_EventNumber;   //!
@@ -219,6 +234,12 @@ void redback(TString FS = "4e", TString dataset = "DY50", TString EXTRA="")
   TBranch        *b_JetSigma;   //!
   TBranch        *b_overallEventWeight;   //!
   TBranch        *b_xsec;   //!
+  TBranch        *b_pwh_hadronic_VAJHU; //categories
+  TBranch        *b_phj_VAJHU;  //categories
+  TBranch        *b_phjj_VAJHU_old;  //categories
+  TBranch        *b_pvbf_VAJHU_old;  //categories
+  TBranch        *b_pAux_vbf_VAJHU;  //categories
+  TBranch        *b_pzh_hadronic_VAJHU;  //categories
 
   // Set object pointer
   LepPt = 0;
@@ -282,6 +303,12 @@ void redback(TString FS = "4e", TString dataset = "DY50", TString EXTRA="")
   mytree->SetBranchAddress("JetSigma", &JetSigma, &b_JetSigma);
   mytree->SetBranchAddress("overallEventWeight", &overallEventWeight, &b_overallEventWeight);
   mytree->SetBranchAddress("xsec", &xsec, &b_xsec);
+  mytree->SetBranchAddress("pwh_hadronic_VAJHU", &pwh_hadronic_VAJHU, &b_pwh_hadronic_VAJHU);
+  mytree->SetBranchAddress("phj_VAJHU", &phj_VAJHU, &b_phj_VAJHU);
+  mytree->SetBranchAddress("phjj_VAJHU_old", &phjj_VAJHU_old, &b_phjj_VAJHU_old);
+  mytree->SetBranchAddress("pvbf_VAJHU_old", &pvbf_VAJHU_old, &b_pvbf_VAJHU_old);
+  mytree->SetBranchAddress("pAux_vbf_VAJHU", &pAux_vbf_VAJHU, &b_pAux_vbf_VAJHU);
+  mytree->SetBranchAddress("pzh_hadronic_VAJHU", &pzh_hadronic_VAJHU, &b_pzh_hadronic_VAJHU);
 
   // ===============================================================
   //   Definition of some Histos
@@ -414,6 +441,98 @@ void redback(TString FS = "4e", TString dataset = "DY50", TString EXTRA="")
     //cout << "FS = " << FS << " Z1 = " << Z1Flav << " Z2 = " << Z2Flav << " pass = " << pass_flavor << endl;
 
     if(pass_flavor==false) continue; cutdes[icut] = "Pass Final State"; ICUT->Fill((Float_t)icut,WEIGHT); icut++; 
+
+
+    // ===========================================
+    // Categories
+    // ===========================================
+
+    //QGLikelihood vector first has to be converted to a C++ array
+    //cout << "nCleanedJetsPt30 = " <<  nCleanedJetsPt30 << endl;
+    //cout << "JetQGLikelihood->size() = " <<  JetQGLikelihood->size() << endl;
+    //cout << "JetPt->size() = " <<  JetPt->size() << endl;
+    //cout << "JetEta->size() = " <<  JetEta->size() << endl;
+    //cout << "JetPhi->size() = " <<  JetPhi->size() << endl;
+
+    Float_t jetQGL[nCleanedJetsPt30];
+    for(int j=0; j<nCleanedJetsPt30; j++)
+	{
+	//cout << "j = " << j << endl;
+	jetQGL[j] = JetQGLikelihood->at(j);
+	}
+
+
+    int cate = -1;
+    //cout << "here - " <<  cate << endl;
+    cate = categoryIchep16(nExtraLep, nExtraZ, nCleanedJetsPt30, nCleanedJetsPt30BTagged, jetQGL, phjj_VAJHU_old, phj_VAJHU, pvbf_VAJHU_old, pAux_vbf_VAJHU, pwh_hadronic_VAJHU, pzh_hadronic_VAJHU);
+
+
+    bool passcat = false;
+
+    if(cat == "ALL")
+	{
+	if (cate > -1) passcat = true;
+	if(passcat == false) continue;
+	cutdes[icut] = "All categories";
+	ICUT->Fill((Float_t)icut,WEIGHT);
+	icut++;  
+	}
+
+    if(cat == "VBF-2j")
+	{
+	if (cate == 2) passcat = true;
+	if(passcat == false) continue;
+	cutdes[icut] = "VBF-2j category";
+	ICUT->Fill((Float_t)icut,WEIGHT);
+	icut++;  
+	}
+
+    if(cat == "VH-hadronic")
+	{
+	if (cate == 4) passcat = true;
+	if(passcat == false) continue;
+	cutdes[icut] = "VH-hadronic category";
+	ICUT->Fill((Float_t)icut,WEIGHT);
+	icut++;  
+	}
+
+    if(cat == "VH-leptonic")
+	{
+	if (cate == 3) passcat = true;
+	if(passcat == false) continue;
+	cutdes[icut] = "VH-leptonic category";
+	ICUT->Fill((Float_t)icut,WEIGHT);
+	icut++;  
+	}
+
+    if(cat == "ttH")
+	{
+	if (cate == 5) passcat = true;
+	if(passcat == false) continue;
+	cutdes[icut] = "ttH category";
+	ICUT->Fill((Float_t)icut,WEIGHT);
+	icut++;  
+	}
+
+    if(cat == "VBF-1j")
+	{
+	if (cate == 1) passcat = true;
+	if(passcat == false) continue;
+	cutdes[icut] = "VBF-1j category";
+	ICUT->Fill((Float_t)icut,WEIGHT);
+	icut++;  
+	}
+
+    if(cat == "untagged")
+	{
+	if (cate == 0) passcat = true;
+	if(passcat == false) continue;
+	cutdes[icut] = "untagged category";
+	ICUT->Fill((Float_t)icut,WEIGHT);
+	icut++;  
+	}
+
+
 
     // ===========================================
     // Analysis

@@ -693,15 +693,15 @@ void comp_fake(TString channel = "4e", TString EXTRA = "")
 
   std::vector<TString> vec_file_name; vec_file_name.clear();
   //vec_file_name.push_back("out/outputCRZL_ALL_"+channel+"_76XMZ7.root");
-  vec_file_name.push_back("out/outputCRZL_ALL_"+channel+"_76X"+EXTRA+".root");
+  vec_file_name.push_back("histograms/FR/"+channel+"/FR_CRZL_ALL_76X"+EXTRA+".root");
   if(channel=="4e") {
     //vec_file_name.push_back("out/outputCRZL_ALL_"+channel+"_76X.root");
-    vec_file_name.push_back("out/outputCRZL_ALL_"+channel+"_76XMZ7"+EXTRA+".root");
-    vec_file_name.push_back("out/outputCRZL_ALL_"+channel+"_76XMZ60"+EXTRA+".root");
-    vec_file_name.push_back("out/outputCRZL_ALL_"+channel+"_76XM3L5"+EXTRA+".root");
+    vec_file_name.push_back("histograms/FR/"+channel+"/FR_CRZL_ALL_76XMZ7"+EXTRA+".root");
+    vec_file_name.push_back("histograms/FR/"+channel+"/FR_CRZL_ALL_76XMZ60"+EXTRA+".root");
+    vec_file_name.push_back("histograms/FR/"+channel+"/FR_CRZL_ALL_76XM3L5"+EXTRA+".root");
   } // if 4e
     
-  TString output_name = "RESULTS/output_FR_"+channel+EXTRA+".root";
+  TString output_name = "histograms/computed_fakerate/"+channel+"/computedfakerate_"+EXTRA+".root";
   
   TFile *OutPutFile = new TFile(output_name,"RECREATE","",0); 
 
@@ -742,7 +742,7 @@ void comp_fake(TString channel = "4e", TString EXTRA = "")
   for(unsigned int ifile=0;ifile<vec_file_name.size();ifile++) {
     TFile *file = TFile::Open(vec_file_name.at(ifile));
     TString reduced_name = vec_file_name.at(ifile);
-    reduced_name.ReplaceAll("out/outputCRZL_ALL_"+channel+"_", ""); 
+    reduced_name.ReplaceAll("histograms/FR/"+channel+"/FR_CRZL_ALL_", ""); 
     reduced_name.ReplaceAll(".root", ""); 
     cout << "reduce = " << reduced_name << endl;
     draw_comp_histo(file, OutPutFile,"Lep3_pT_all_EB_afterMET",  "Lep3_pT_all_EB_afterIDISO", rebin_pT, 0,80, PRINT, false, false, 1, true, name_legend, reduced_name);
@@ -780,16 +780,17 @@ void comp_fake(TString channel = "4e", TString EXTRA = "")
     // --------------------------------------
     //         FR vs Missing Hits
     // --------------------------------------
+    cout << "Missing hits !" << endl;
     //Lep3pT710, Lep3pT1020, Lep3pT2030, Lep3pT3040, Lep3pT4050,Lep3pT5080
     TString pTbins[6] = {"710", "1020", "2030", "3040", "4050", "5080"};
-    TString file_ZLL = "out/outputCRZLL_ALL_4e_76X.root";
+    TString file_ZLL = "histograms/FR/4e/FR_CRZLL_ALL_76X.root";
    
     if(EXTRA.Contains("incl")>0) {
       comp_FRMhits(vec_file_name, channel, name_vecEB, OutPutFile, "Lep3_inclmhits_EB", file_ZLL, "Lep34_inclmhits_EB");
       comp_FRMhits(vec_file_name, channel, name_vecEE, OutPutFile, "Lep3_inclmhits_EE", file_ZLL, "Lep34_inclmhits_EE");
     }
     else {
- 
+     cout << "Missing hits loop !" << endl;
       for(int i=0;i<6;i++) {
 	comp_FRMhits(vec_file_name, channel, name_vecEB, OutPutFile, "Lep3_mhits_EB_pT"+pTbins[i], file_ZLL, "Lep34_mhits_EB_pT"+pTbins[i]);
 	comp_FRMhits(vec_file_name, channel, name_vecEE, OutPutFile, "Lep3_mhits_EE_pT"+pTbins[i], file_ZLL, "Lep34_mhits_EE_pT"+pTbins[i]);
