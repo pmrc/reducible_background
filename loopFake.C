@@ -69,7 +69,7 @@ void loopFake(TString FS = "4e", TString dataset = "ALL", TString branch = "CRZL
   TFile *myfile;
   //myfile = TFile::Open("root://lxcms03//data3/Higgs/160225/ggH125/ZZ4lAnalysis.root");
   //cout << "Opening file!" << endl;
-  TString ntuple = "root://lxcms03//data3/Higgs/160225/"+dataflag+"/ZZ4lAnalysis.root";
+  TString ntuple = "root://lxcms03//data3/Higgs/160613_76X/"+dataflag+"/ZZ4lAnalysis.root";
   cout << "Reading " << ntuple << "..." << endl;
   myfile = TFile::Open(ntuple);
 
@@ -428,10 +428,10 @@ void loopFake(TString FS = "4e", TString dataset = "ALL", TString branch = "CRZL
     double eta_cut = 0;
     // if(FS=="4e" && (Z1Flav==-121 && Z2Flav==+121)) pass_flavor = true;
     //    if(FS=="4mu" && (Z1Flav==-169 && Z2Flav==+169)) pass_flavor = true;
-    //    if(FS=="2mu2e" && (Z1Flav==-169 && Z2Flav==+121)) pass_flavor = true;
-    //if(FS=="2e2mu" && (Z1Flav==-121 && Z2Flav==+169)) pass_flavor = true;
-    if(FS=="4e"    &&  fabs(LepLepId->at(2) == 11) ) { pass_flavor = true; eta_cut = 1.479; }
-    if(FS=="4mu" &&  fabs(LepLepId->at(2) == 13) ) { pass_flavor = true; eta_cut = 1.2; }
+    if(FS=="2mu2e" && Z1Flav==-169 && fabs(LepLepId->at(2)) == 11) { pass_flavor = true; eta_cut = 1.479; }
+    if(FS=="2e2mu" && Z1Flav==-121 && fabs(LepLepId->at(2)) == 13) { pass_flavor = true; eta_cut = 1.2; }
+    if(FS=="4e"    && Z1Flav==-121 && fabs(LepLepId->at(2)) == 11) { pass_flavor = true; eta_cut = 1.479; }
+    if(FS=="4mu" && Z1Flav==-169 && fabs(LepLepId->at(2)) == 13) { pass_flavor = true; eta_cut = 1.2; }
     
     //  bool pass_flavor = false;
     // if(trig == "ee" && (Z1Flav==-121 && (LepLepId->at(2) ==+11 || LepLepId->at(2) == -11))) pass_flavor = true;

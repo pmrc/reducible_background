@@ -41,10 +41,14 @@ int findBin(double LepPt, double LepId) {
 }
 
 // ========================================================================================================================
-void redback(TString FS = "4e", TString dataset = "ALL", TString cat = "ALL", TString EXTRA="")
+void redback(TString FS = "4e", TString dataset = "ALL", TString mode = "estimate", TString cat = "ALL", TString EXTRA="")
 // ========================================================================================================================
 {
-  cout << "---> Working with Final State: " << FS << endl;
+  cout << "---> Working with Final State : " << FS << endl;
+  cout << "---> Working with Dataset :     " << dataset << endl;
+  cout << "---> Working with Category :    " << cat << endl;
+  cout << "---> Working with mode :        " << mode << endl;
+  cout << "---> Working with Extra :       " << EXTRA << endl;
 
   if( (FS!="4e") && (FS!="4mu")  && (FS!="2e2mu") &&  (FS!="2mu2e") )
     { cout << " ERROR ! FinalState should be 4e, 4mu, 2e2mu or 2mu2e" << endl; return; }
@@ -84,12 +88,14 @@ void redback(TString FS = "4e", TString dataset = "ALL", TString cat = "ALL", TS
  
   cout << "---> Open Electron Fake Rates " << endl;
   TString file_electron ;
-  if(EXTRA.Contains("incl")>0) file_electron = "RESULTS/output_FR_4eincl.root"; 
-  else file_electron = "RESULTS/output_FR_4e.root"; 
+  if(EXTRA.Contains("incl")>0) file_electron = "histograms/computed_fakerate/4e/computedfakerate_incl.root"; 
+  else file_electron = "histograms/computed_fakerate/4e/computedfakerate_.root"; 
+  cout << "Using : " << file_electron << endl;
   TFile * f_electron = TFile::Open(file_electron);
   
   cout << "---> Open Muon Fake Rates " << endl;
-  TString file_muon = "RESULTS/output_FR_4mu.root";
+  TString file_muon = "histograms/computed_fakerate/4mu/computedfakerate_.root";
+  cout << "Using : " << file_muon << endl;
   TFile * f_muon = TFile::Open(file_muon);
   //
   TGraph* h1D_FRmu_EB = (TGraph*)f_muon->Get("TG_Lep3_pT_all_EB_afterMET_76X");
@@ -100,23 +106,39 @@ void redback(TString FS = "4e", TString dataset = "ALL", TString cat = "ALL", TS
   double * fakemu_EE = new double[10]; fakemu_EE = h1D_FRmu_EE->GetY();
   //
   cout << "Open Electron" << endl;
-  TString fakeEB = "CorrFR_TG_Lep3_pT_all_EB_afterMET_76X";
-  TString fakeEE = "CorrFR_TG_Lep3_pT_all_EE_afterMET_76X";
-  if(EXTRA.Contains("incl")>0) { 
-      fakeEB = "CorrFR_TG_Lep3_pT_all_EB_afterMET_76Xincl";
-      fakeEE = "CorrFR_TG_Lep3_pT_all_EE_afterMET_76Xincl";
-    }
+  TString fakeEB = "";
+  TString fakeEE = "";
+  if (mode == "estimate")
+	{
+  	fakeEB = "TG_Lep3_pT_all_EB_afterMET_76X";
+  	fakeEE = "TG_Lep3_pT_all_EE_afterMET_76X";
+  	if(EXTRA.Contains("incl")>0)
+		{ 
+      		fakeEB = "TG_Lep3_pT_all_EB_afterMET_76Xincl";
+      		fakeEE = "TG_Lep3_pT_all_EE_afterMET_76Xincl";
+    		}
+	}
+  if (mode == "final")
+	{
+  	fakeEB = "CorrFR_TG_Lep3_pT_all_EB_afterMET_76X";
+  	fakeEE = "CorrFR_TG_Lep3_pT_all_EE_afterMET_76X";
+  	if(EXTRA.Contains("incl")>0)
+		{ 
+      		fakeEB = "CorrFR_TG_Lep3_pT_all_EB_afterMET_76Xincl";
+      		fakeEE = "CorrFR_TG_Lep3_pT_all_EE_afterMET_76Xincl";
+    		}
+	}
   TGraph* h1D_FRel_EB = (TGraph*)f_electron->Get(fakeEB);
   TGraph* h1D_FRel_EE = (TGraph*)f_electron->Get(fakeEE);
-  cout << "electron" << endl;
+  cout << "Tgraphs : " << fakeEB << " " << fakeEE << endl;
   double * fakeele_EB = h1D_FRel_EB->GetY();
   double * fakeele_EE = h1D_FRel_EE->GetY();
   
   // ------------------------------------------------
   // OutPut File
   // ------------------------------------------------
-  cout << "---> Output File" << endl;
-  TString outputfile_name = "out/outputCRZLL_"+dataset+"_"+FS+"_"+EXTRA+".root";
+  TString outputfile_name = "histograms/FR/"+FS+"/FR_CRZLL_"+dataset+"_"+EXTRA+".root";
+  cout << "---> Output File : " << outputfile_name << endl;
   TFile * OutputFile = new TFile(outputfile_name, "RECREATE"); //, "", 5);
   // ------------------------------------------------
   // load the tree 
@@ -149,6 +171,8 @@ void redback(TString FS = "4e", TString dataset = "ALL", TString cat = "ALL", TS
   Short_t         nCleanedJets;
   Short_t         nCleanedJetsPt30;
   Short_t         nCleanedJetsPt30BTagged;
+  Short_t         nExtraLep;
+  Short_t         nExtraZ;
   Short_t         trigWord;
   Float_t         ZZMass;
   Short_t         ZZsel;
@@ -201,6 +225,8 @@ void redback(TString FS = "4e", TString dataset = "ALL", TString cat = "ALL", TS
   TBranch        *b_nCleanedJets;   //!
   TBranch        *b_nCleanedJetsPt30;   //!
   TBranch        *b_nCleanedJetsPt30BTagged;   //!
+  TBranch        *b_nExtraLep;   //!
+  TBranch        *b_nExtraZ;   //!
   TBranch        *b_trigWord;   //!
   TBranch        *b_ZZMass;   //!
   TBranch        *b_ZZMassErr;   //!
@@ -271,6 +297,8 @@ void redback(TString FS = "4e", TString dataset = "ALL", TString cat = "ALL", TS
   mytree->SetBranchAddress("nCleanedJets", &nCleanedJets, &b_nCleanedJets);
   mytree->SetBranchAddress("nCleanedJetsPt30", &nCleanedJetsPt30, &b_nCleanedJetsPt30);
   mytree->SetBranchAddress("nCleanedJetsPt30BTagged", &nCleanedJetsPt30BTagged, &b_nCleanedJetsPt30BTagged);
+  mytree->SetBranchAddress("nExtraLep", &nExtraLep, &b_nExtraLep);
+  mytree->SetBranchAddress("nExtraZ", &nExtraZ, &b_nExtraZ);
   mytree->SetBranchAddress("trigWord", &trigWord, &b_trigWord);
   mytree->SetBranchAddress("ZZMass", &ZZMass, &b_ZZMass);
   mytree->SetBranchAddress("ZZsel", &ZZsel, &b_ZZsel);
@@ -351,7 +379,7 @@ void redback(TString FS = "4e", TString dataset = "ALL", TString cat = "ALL", TS
       h_Lep3_mhits[iloc][ipt] = new TH1F("Lep3_mhits_"+loc[iloc]+"_pT"+pTbin1+pTbin2, "Lep3_mhits_"+loc[iloc]+"_pT"+pTbin1+pTbin2, 5, 0, 5);
       h_Lep4_mhits[iloc][ipt] = new TH1F("Lep4_mhits_"+loc[iloc]+"_pT"+pTbin1+pTbin2, "Lep4_mhits_"+loc[iloc]+"_pT"+pTbin1+pTbin2, 5, 0, 5);
       h_Lep34_mhits[iloc][ipt] = new TH1F("Lep34_mhits_"+loc[iloc]+"_pT"+pTbin1+pTbin2, "Lep34_mhits_"+loc[iloc]+"_pT"+pTbin1+pTbin2, 5, 0, 5);
-      cout <<"pt = " << pTbin1 << " " << pTbin2 << endl;
+      //cout <<"pt = " << pTbin1 << " " << pTbin2 << endl;
     } // for loop on pT
   } // for loop in iloc
  
@@ -397,7 +425,8 @@ void redback(TString FS = "4e", TString dataset = "ALL", TString cat = "ALL", TS
   for (Int_t iEvt = 0; iEvt < MAX ; ++iEvt) {
     //cout << "i   = " << iEvt << endl;
     //mytree->LoadTree(iEvt);
-    if (iEvt % 1000 == 0) cout<< "Loop: processing event  " << iEvt <<endl;     
+    float_t percent = iEvt * 100 / MAX; 
+    if (iEvt % 10000 == 0 && iEvt > 0) cout<< "Loop: processing event  " << iEvt << " (" << percent << "%)" << endl;    
     
     mytree->GetEntry(iEvt);
     
@@ -653,7 +682,7 @@ void redback(TString FS = "4e", TString dataset = "ALL", TString cat = "ALL", TS
   cout << "icut_max = " << icut_MAX << endl;
   //if(icut_MAX<2) icut_MAX = 30;
   cout << "======================================================================" << endl;
-  for ( Int_t i=0; i<icut_MAX+1 ; i++ )
+  for ( Int_t i=0; i<10 ; i++ )
     cout << "Cut " << setw(3) << i << " : " << setw(30) << cutdes[i] << " : " << ICUT->GetBinContent(i+1) << endl;
   //cout << "Cut " << i << " : " << ICUT->GetBinContent(i) << endl;
   cout << "======================================================================" << endl;
