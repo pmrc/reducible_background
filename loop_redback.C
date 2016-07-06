@@ -1,173 +1,42 @@
 //Created by Pedro Cipriano
 
-void loop_redback()
+void loop_redback(int mode = 1)
 	{
-	//4e
-	//redback("4e","ALL","estimate","ALL","76X"); //done during loading
-	redback("4e","ALL","estimate","untagged","76X");
-	redback("4e","ALL","estimate","VBF-1j","76X");
-	redback("4e","ALL","estimate","VH-hadronic","76X");
-	redback("4e","ALL","estimate","VH-leptonic","76X");
-	redback("4e","ALL","estimate","VBF-2j","76X");
-	redback("4e","ALL","estimate","ttH","76X");
 
-	redback("4e","DY50","estimate","ALL","76X");
-	redback("4e","DY50","estimate","untagged","76X");
-	redback("4e","DY50","estimate","VBF-1j","76X");
-	redback("4e","DY50","estimate","VH-hadronic","76X");
-	redback("4e","DY50","estimate","VH-leptonic","76X");
-	redback("4e","DY50","estimate","VBF-2j","76X");
-	redback("4e","DY50","estimate","ttH","76X");
-
-	redback("4e","TT","estimate","ALL","76X");
-	redback("4e","TT","estimate","untagged","76X");
-	redback("4e","TT","estimate","VBF-1j","76X");
-	redback("4e","TT","estimate","VH-hadronic","76X");
-	redback("4e","TT","estimate","VH-leptonic","76X");
-	redback("4e","TT","estimate","VBF-2j","76X");
-	redback("4e","TT","estimate","ttH","76X");
-
-	redback("4e","WZ","estimate","ALL","76X");
-	redback("4e","WZ","estimate","untagged","76X");
-	redback("4e","WZ","estimate","VBF-1j","76X");
-	redback("4e","WZ","estimate","VH-hadronic","76X");
-	redback("4e","WZ","estimate","VH-leptonic","76X");
-	redback("4e","WZ","estimate","VBF-2j","76X");
-	redback("4e","WZ","estimate","ttH","76X");
-
-	redback("4e","ZZ","estimate","ALL","76X");
-	redback("4e","ZZ","estimate","untagged","76X");
-	redback("4e","ZZ","estimate","VBF-1j","76X");
-	redback("4e","ZZ","estimate","VH-hadronic","76X");
-	redback("4e","ZZ","estimate","VH-leptonic","76X");
-	redback("4e","ZZ","estimate","VBF-2j","76X");
-	redback("4e","ZZ","estimate","ttH","76X");
-
-	
-	//4mu
-	redback("4mu","ALL","estimate","ALL","76X");
-	redback("4mu","ALL","estimate","untagged","76X");
-	redback("4mu","ALL","estimate","VBF-1j","76X");
-	redback("4mu","ALL","estimate","VH-hadronic","76X");
-	redback("4mu","ALL","estimate","VH-leptonic","76X");
-	redback("4mu","ALL","estimate","VBF-2j","76X");
-	redback("4mu","ALL","estimate","ttH","76X");
+	int nmodes = 2;
+	TString modes[2] = {"estimate", "final"};
+	int nfstates = 4;
+	TString fstates[4] = {"4e", "2mu2e", "4mu", "2e2mu"};
+	int ncategories = 7;
+	TString categories[7] = {"ALL", "untagged", "VBF-1j", "VBF-2j", "VH-leptonic", "VH-hadronic", "ttH"};
+	int nsamples = 1;
+	TString samples[5] = {"ALL", "DY50", "TT", "WZ", "ZZ"};
 
 
-	redback("4mu","DY50","estimate","ALL","76X");
-	redback("4mu","DY50","estimate","untagged","76X");
-	redback("4mu","DY50","estimate","VBF-1j","76X");
-	redback("4mu","DY50","estimate","VH-hadronic","76X");
-	redback("4mu","DY50","estimate","VH-leptonic","76X");
-	redback("4mu","DY50","estimate","VBF-2j","76X");
-	redback("4mu","DY50","estimate","ttH","76X");
-
-	redback("4mu","TT","estimate","ALL","76X");
-	redback("4mu","TT","estimate","untagged","76X");
-	redback("4mu","TT","estimate","VBF-1j","76X");
-	redback("4mu","TT","estimate","VH-hadronic","76X");
-	redback("4mu","TT","estimate","VH-leptonic","76X");
-	redback("4mu","TT","estimate","VBF-2j","76X");
-	redback("4mu","TT","estimate","ttH","76X");
-
-	redback("4mu","WZ","estimate","ALL","76X");
-	redback("4mu","WZ","estimate","untagged","76X");
-	redback("4mu","WZ","estimate","VBF-1j","76X");
-	redback("4mu","WZ","estimate","VH-hadronic","76X");
-	redback("4mu","WZ","estimate","VH-leptonic","76X");
-	redback("4mu","WZ","estimate","VBF-2j","76X");
-	redback("4mu","WZ","estimate","ttH","76X");
-
-	redback("4mu","ZZ","estimate","ALL","76X");
-	redback("4mu","ZZ","estimate","untagged","76X");
-	redback("4mu","ZZ","estimate","VBF-1j","76X");
-	redback("4mu","ZZ","estimate","VH-hadronic","76X");
-	redback("4mu","ZZ","estimate","VH-leptonic","76X");
-	redback("4mu","ZZ","estimate","VBF-2j","76X");
-	redback("4mu","ZZ","estimate","ttH","76X");
-
-	//2e2mu
-	redback("2e2mu","ALL","estimate","ALL","76X");
-	redback("2e2mu","ALL","estimate","untagged","76X");
-	redback("2e2mu","ALL","estimate","VBF-1j","76X");
-	redback("2e2mu","ALL","estimate","VH-hadronic","76X");
-	redback("2e2mu","ALL","estimate","VH-leptonic","76X");
-	redback("2e2mu","ALL","estimate","VBF-2j","76X");
-	redback("2e2mu","ALL","estimate","ttH","76X");
-
-	redback("2e2mu","DY50","estimate","ALL","76X");
-	redback("2e2mu","DY50","estimate","untagged","76X");
-	redback("2e2mu","DY50","estimate","VBF-1j","76X");
-	redback("2e2mu","DY50","estimate","VH-hadronic","76X");
-	redback("2e2mu","DY50","estimate","VH-leptonic","76X");
-	redback("2e2mu","DY50","estimate","VBF-2j","76X");
-	redback("2e2mu","DY50","estimate","ttH","76X");
-
-	redback("2e2mu","TT","estimate","ALL","76X");
-	redback("2e2mu","TT","estimate","untagged","76X");
-	redback("2e2mu","TT","estimate","VBF-1j","76X");
-	redback("2e2mu","TT","estimate","VH-hadronic","76X");
-	redback("2e2mu","TT","estimate","VH-leptonic","76X");
-	redback("2e2mu","TT","estimate","VBF-2j","76X");
-	redback("2e2mu","TT","estimate","ttH","76X");
-
-	redback("2e2mu","WZ","estimate","ALL","76X");
-	redback("2e2mu","WZ","estimate","untagged","76X");
-	redback("2e2mu","WZ","estimate","VBF-1j","76X");
-	redback("2e2mu","WZ","estimate","VH-hadronic","76X");
-	redback("2e2mu","WZ","estimate","VH-leptonic","76X");
-	redback("2e2mu","WZ","estimate","VBF-2j","76X");
-	redback("2e2mu","WZ","estimate","ttH","76X");
-
-	redback("2e2mu","ZZ","estimate","ALL","76X");
-	redback("2e2mu","ZZ","estimate","untagged","76X");
-	redback("2e2mu","ZZ","estimate","VBF-1j","76X");
-	redback("2e2mu","ZZ","estimate","VH-hadronic","76X");
-	redback("2e2mu","ZZ","estimate","VH-leptonic","76X");
-	redback("2e2mu","ZZ","estimate","VBF-2j","76X");
-	redback("2e2mu","ZZ","estimate","ttH","76X");
+	//standard fake loop for all samples and final states
+	if (mode == 2)
+		{
+		for (int i=2;i<nfstates;i++)
+			{
+			for (int j=0;j<nsamples;j++)
+				{
+				for (int k=0;k<ncategories;k++)
+					{
+					redback(fstates[i],samples[j],modes[1],categories[k],"76X");
+					}
+				}
+			}
+		}
 
 
-	//2mu2e
-	redback("2mu2e","ALL","estimate","ALL","76X");
-	redback("2mu2e","ALL","estimate","untagged","76X");
-	redback("2mu2e","ALL","estimate","VBF-1j","76X");
-	redback("2mu2e","ALL","estimate","VH-hadronic","76X");
-	redback("2mu2e","ALL","estimate","VH-leptonic","76X");
-	redback("2mu2e","ALL","estimate","VBF-2j","76X");
-	redback("2mu2e","ALL","estimate","ttH","76X");
+	if (mode == 1)
+		{
+		for (int i=1;i<2;i++) //first already run on loading, 4mu and 2e2mu dont need correction
+			{
+			redback(fstates[i],samples[0],modes[0],categories[0],"76X");
+			}
+		}
 
-	redback("2mu2e","DY50","estimate","ALL","76X");
-	redback("2mu2e","DY50","estimate","untagged","76X");
-	redback("2mu2e","DY50","estimate","VBF-1j","76X");
-	redback("2mu2e","DY50","estimate","VH-hadronic","76X");
-	redback("2mu2e","DY50","estimate","VH-leptonic","76X");
-	redback("2mu2e","DY50","estimate","VBF-2j","76X");
-	redback("2mu2e","DY50","estimate","ttH","76X");
-
-	redback("2mu2e","TT","estimate","ALL","76X");
-	redback("2mu2e","TT","estimate","untagged","76X");
-	redback("2mu2e","TT","estimate","VBF-1j","76X");
-	redback("2mu2e","TT","estimate","VH-hadronic","76X");
-	redback("2mu2e","TT","estimate","VH-leptonic","76X");
-	redback("2mu2e","TT","estimate","VBF-2j","76X");
-	redback("2mu2e","TT","estimate","ttH","76X");
-
-	redback("2mu2e","WZ","estimate","ALL","76X");
-	redback("2mu2e","WZ","estimate","untagged","76X");
-	redback("2mu2e","WZ","estimate","VBF-1j","76X");
-	redback("2mu2e","WZ","estimate","VH-hadronic","76X");
-	redback("2mu2e","WZ","estimate","VH-leptonic","76X");
-	redback("2mu2e","WZ","estimate","VBF-2j","76X");
-	redback("2mu2e","WZ","estimate","ttH","76X");
-
-	redback("2mu2e","ZZ","estimate","ALL","76X");
-	redback("2mu2e","ZZ","estimate","untagged","76X");
-	redback("2mu2e","ZZ","estimate","VBF-1j","76X");
-	redback("2mu2e","ZZ","estimate","VH-hadronic","76X");
-	redback("2mu2e","ZZ","estimate","VH-leptonic","76X");
-	redback("2mu2e","ZZ","estimate","VBF-2j","76X");
-	redback("2mu2e","ZZ","estimate","ttH","76X");
 	
 	}
 

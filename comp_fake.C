@@ -28,7 +28,7 @@ void draw_comp_histo(TFile * file, TString channel, TFile * OutputFile, TString 
   TH1F* histo_truth;
   TH1F* histo_simu;
   
-  cout << "-----------------> Histo for : " << name_histo_truth << "     and " << name_histo_simu << " extra = " << extra_name << endl; //Xhisto_pass << endl;
+  cout << "Draw Comp Histo -----------------> Histo for : " << name_histo_truth << "     and " << name_histo_simu << " extra = " << extra_name << endl; //Xhisto_pass << endl;
   
   TString reduced_name = name_histo_truth; //TString
   //reduced_name.Remove("0","/");
@@ -236,7 +236,7 @@ void draw_comp_histo(TFile * file, TString channel, TFile * OutputFile, TString 
     histo_simu->GetXaxis()->SetRangeUser(range_min, range_max);
     histo_simu->SetTitle("");
     histo_simu->GetYaxis()->SetTitle("Efficiency");
-    histo_simu->GetYaxis()->SetRangeUser(0.4,1.);
+    histo_simu->GetYaxis()->SetRangeUser(0.0,1.);
     histo_simu->Draw("P"); //HIST");
     //leg4->Draw();
 
@@ -320,7 +320,7 @@ void draw_comp_histo(TFile * file, TString channel, TFile * OutputFile, TString 
 
 
 // ==================================================================================================================================
-void comp_FRMhits(std::vector<TString> vec_file_name, TString channel, std::vector<TString> vec_fakename_EBEE, TFile* OutputFile, TString mhitsname, TString file_ZLL, TString mhitsnameZLL)
+void comp_FRMhits(std::vector<TString> vec_file_name, TString channel, std::vector<TString> vec_fakename_EBEE, TH1F *corr, TH1F *corr_up, TH1F *corr_down, TH1F *hmhits_plot, TFile* OutputFile, TString mhitsname, TString file_ZLL, TString mhitsnameZLL)
 //(vec_file_name, name_vecEB, OutPutFile, "Lep3_mhits_EE_pT1020");
 // ==================================================================================================================================
 {
@@ -344,11 +344,17 @@ void comp_FRMhits(std::vector<TString> vec_file_name, TString channel, std::vect
   
   cout << "fake bin = " << fakebin << endl;
 
+  TH1F *hmhits = 0;
+  hmhits = new TH1F("mhits","Lep3_pT",vec_file_name.size(), 0, vec_file_name.size());;
+
+
   for(unsigned int i=0;i<vec_file_name.size();i++) {
     TFile *file = TFile::Open(vec_file_name.at(i)); 
     TH1F* h_mhits = (TH1F*)file->Get(mhitsname);
     mhits[i] = h_mhits->GetMean();
     mhitsErr[i] = h_mhits->GetMeanError();
+    hmhits->SetBinContent(i+1,h_mhits->GetMean());
+    hmhits->SetBinError(i+1,h_mhits->GetMeanError());
     //cout << "mhits = " << mhits[i] << endl;
   } // for loop on mhits
 
@@ -396,8 +402,15 @@ void comp_FRMhits(std::vector<TString> vec_file_name, TString channel, std::vect
   cout << " pT " << mhitsname << endl;
   cout << " mean = " << zLL_mhits->GetMean() << " error = " << zLL_mhits->GetMeanError() << endl;
   double corr_fake =  f1->Eval(zLL_mhits->GetMean());
-  double corr_fakeErr = f1->Eval(zLL_mhits->GetMeanError() + zLL_mhits->GetMean());
-  cout << corr_fake << " " << corr_fakeErr << endl;
+  double corr_fakeErr = f1->Eval(zLL_mhits->GetMean() + zLL_mhits->GetMeanError());
+  double dif = corr_fakeErr - corr_fake;
+  //double corr_fakeErrDown = f1->Eval(zLL_mhits->GetMean() - zLL_mhits->GetMeanError());
+  cout << "Correction : " << corr_fake << " +- " << dif << " (" << 100*(dif)/corr_fake << "%)" << endl;
+  double temp_corr_up = corr_fake + dif;
+  double temp_corr_down = corr_fake - dif;
+  if (corr_fake < 0.0) { corr_fake = 0.0; temp_corr_up = dif;}
+  if (temp_corr_down < 0.0) { temp_corr_down = 0.0; }
+  cout << "Up = " << temp_corr_up << " Down = " << temp_corr_down << endl;
   cout << " ==============" << endl;
   //mhits[i] = h_mhits->GetMean();
 
@@ -407,10 +420,95 @@ void comp_FRMhits(std::vector<TString> vec_file_name, TString channel, std::vect
   OutputFile->cd();
   TC_FRvsMhits->Write();
 
+  corr->SetBinContent(fakebin+1,corr_fake);
+  corr->SetBinError(fakebin+1,dif);
+  corr_up->SetBinContent(fakebin+1,temp_corr_up);
+  corr_down->SetBinContent(fakebin+1,temp_corr_down);
+  hmhits_plot->SetBinContent(fakebin+1,zLL_mhits->GetMean());
+  hmhits_plot->SetBinError(fakebin+1,zLL_mhits->GetMeanError());
+
   TC_FRvsMhits->Print("PLOTS/png/"+ channel + "_" + TString(TC_FRvsMhits->GetName())+".png");
   TC_FRvsMhits->Print("PLOTS/pdf/"+ channel + "_" + TString(TC_FRvsMhits->GetName())+".pdf");
+
+
+  TCanvas * cmhits = new TCanvas("cmhits", "cmhits", 800, 600);
+
+
+  hmhits->Draw();
+
+  cmhits->Print("PLOTS/png/"+ channel + "_mhits_" + TString(TC_FRvsMhits->GetName())+".png");
  }
 
+
+
+
+// ==================================================================================================================================
+void plot_correction(TH1F *corr, TH1F *corr_up, TH1F *corr_down, TString channel, TString flag)
+// ==================================================================================================================================
+{
+
+  TCanvas * canvas = new TCanvas("corr","corr",800,600);
+
+  TLegend *legend = new TLegend(0.1545226,0.6835664,0.3743719,0.8916084,NULL,"");
+  legend->SetTextSize(0.03811252); //(0.035); 
+  legend->SetTextFont(42);
+  legend->SetLineColor(0);
+  legend->SetLineStyle(1);
+  legend->SetLineWidth(1);
+  legend->SetFillColor(0);
+  legend->SetFillStyle(0);
+
+    corr->GetYaxis()->SetRangeUser(0.0,0.5);
+    corr->GetYaxis()->SetTitle("Fake Rate"); //Electron ID Efficiency");
+    corr->GetXaxis()->SetTitle("3^{rd} Lepton p_{T}"); //Electron ID Efficiency");
+    corr->Draw();
+    corr_up->SetLineColor(2);
+    corr_up->Draw("same");
+    corr_down->SetLineColor(3);
+    corr_down->Draw("same");
+
+
+    legend->AddEntry(corr, "Correction","lp");
+    legend->AddEntry(corr_up, "Upper Estimation","lp");
+    legend->AddEntry(corr_down, "Lower Estimation","lp");
+    legend->Draw();
+
+
+  canvas->Print("PLOTS/png/"+ channel + "_fake_rate_correction_" + flag + ".png");
+
+}
+
+
+// ==================================================================================================================================
+void plot_mhits(TH1F *mhits_EB, TH1F *mhits_EE, TString channel)
+// ==================================================================================================================================
+{
+
+  TCanvas * canvas = new TCanvas("mhits",",hits",800,600);
+
+  TLegend *legend = new TLegend(0.1545226,0.6835664,0.3743719,0.8916084,NULL,"brNDC");
+  legend->SetTextSize(0.03811252); //(0.035); 
+  legend->SetTextFont(42);
+  legend->SetLineColor(0);
+  legend->SetLineStyle(1);
+  legend->SetLineWidth(1);
+  legend->SetFillColor(0);
+  legend->SetFillStyle(0);
+
+    mhits_EB->GetYaxis()->SetRangeUser(0.0,0.5);
+    mhits_EB->Draw();
+    mhits_EE->SetLineColor(2);
+    mhits_EE->Draw("same");
+
+
+    legend->AddEntry(mhits_EB, "Barrel","lp");
+    legend->AddEntry(mhits_EE, "EndCap","lp");
+    legend->Draw();
+
+
+  canvas->Print("PLOTS/png/"+ channel + "_mhits.png");
+
+}
 
 
 
@@ -456,8 +554,10 @@ void draw_comp_vecturnons(TFile * OutputFile, TString channel, std::vector<TStri
   int line[6]   = {1,  1, 1, 1 ,  1, 1};
   
   for(unsigned int i=0;i<name_TG.size();i++) {
-    
-    cout << "--------> Comp Turnons " << name_TG.at(i) << endl;; 
+
+    TString name = name_TG.at(i);     
+    cout << "--------> Comp Turnons " << name << endl;
+
     
     TGraphAsymmErrors * TG_turnon1;
     TG_turnon1 = (TGraphAsymmErrors*)OutputFile->Get(name_TG.at(i));
@@ -470,10 +570,10 @@ void draw_comp_vecturnons(TFile * OutputFile, TString channel, std::vector<TStri
     TG_turnon1->SetMarkerColor(colors[i]);
     //if(name_TG.at(i).Contains("pT")>0)  TG_turnon1->GetXaxis()->SetTitle("E_{T} [GeV]");
     TG_turnon1->GetYaxis()->SetTitle("Fake Rate"); //Electron ID Efficiency");
-    TG_turnon1->GetXaxis()->SetTitle("Lepton_{3} p_{T}"); //Electron ID Efficiency");
+    TG_turnon1->GetXaxis()->SetTitle("3^{rd} Lepton p_{T}"); //Electron ID Efficiency");
     TG_turnon1->GetXaxis()->SetLimits(range_min,range_max);
-    if(extra_name.Contains("4mu")>0) TG_turnon1->GetYaxis()->SetRangeUser(0., 0.5); //1.4);
-    else TG_turnon1->GetYaxis()->SetRangeUser(0., 0.8); //1.4);
+    TG_turnon1->GetYaxis()->SetRangeUser(0., 0.25); //1.4);
+    if (name_legend[1].Contains("WZ") > 0) { TG_turnon1->GetYaxis()->SetRangeUser(0., 1.5); }
     if(i==0) TG_turnon1->Draw("AP");
     else TG_turnon1->Draw("PSAME");
     legend->AddEntry(TG_turnon1, name_legend[i],"lp");
@@ -530,14 +630,14 @@ void draw_comp_vecturnons(TFile * OutputFile, TString channel, std::vector<TStri
 
 
 // ==================================================================================================================================
-void draw_comp_corrFR(TFile* OutputFile, TString channel, TString name_FR)
+void draw_comp_corrFR(TFile* OutputFile, TString channel, TH1F *corr, TString name_FR)
 // ==================================================================================================================================
 {
   TCanvas * TC_corrFR = new TCanvas("CORRFR_"+name_FR, "CORRFR_"+name_FR, 800, 600);
   gPad->SetGrid();
 
   TGraph* h_fake = (TGraph*)OutputFile->Get(name_FR); /// vec_fakename_EBEE.at(j));
-  h_fake->GetYaxis()->SetRangeUser(0,0.2);
+  h_fake->GetYaxis()->SetRangeUser(-0.05,0.3);
   h_fake->GetXaxis()->SetTitle("Lepton pT"); 
   h_fake->Draw("AP");
 
@@ -546,29 +646,25 @@ void draw_comp_corrFR(TFile* OutputFile, TString channel, TString name_FR)
   //7,10,20,30,40,50,80
   double pTbins[6]      = {8.5, 15, 25, 35, 45, 65}; // 7,10,20,30,40,50,80};
   double pTbinsErr[6] = {1.5, 5, 5, 5, 5, 15};
-  
-  double corrEB[6] = {0.020687,  0.019609, 0.0506095, 0.0280723, 0.0296561, 0.100752 };
-  double corrEBErr[6] = {0.0294707 - corrEB[0],  0.0272634- corrEB[1], 0.0658386- corrEB[2], 0.0418654 - corrEB[3], 0.033576- corrEB[4], 0.135549- corrEB[5]};
-
-  double corrEE[6] = {0.0394433 , 0.0465471, 0.0748147, 0.0304773, 0.0475017, 0.141148 };
-  double corrEEErr[6] = {0.0543364- corrEE[0], 0.0613032- corrEE[1], 0.0969381- corrEE[2], 0.041634- corrEE[3], 0.0623318- corrEE[4], 0.149169- corrEE[5]};
 	
   double * TGpTbins = new double[6];
   double * TGpTbinsErr = new double[6];
   double * TGcorrFR = new double[6];
+  double * TGcorrFR_up = new double[6];
+  double * TGcorrFR_down = new double[6];
   double * TGcorrFRErr = new double[6];
   for(int i=0;i<6;i++) {
     TGpTbins[i] = pTbins[i];
     TGpTbinsErr[i] = pTbinsErr[i];
 
-    if(name_FR.Contains("EB")>0) {
-	TGcorrFR[i] = corrEB[i];
-	TGcorrFRErr[i] = corrEBErr[i];
-      }
-    else if(name_FR.Contains("EE")>0) {
-      TGcorrFR[i] = corrEE[i];
-      TGcorrFRErr[i] = corrEEErr[i];
-    }
+    TGcorrFR[i] = corr->GetBinContent(i+1);
+    if (TGcorrFR[i] < 0.0) { TGcorrFR[i] = 0.0; }
+    TGcorrFRErr[i] = corr->GetBinError(i+1);
+    TGcorrFR_up[i] = corr->GetBinContent(i+1) + corr->GetBinError(i+1);
+    if (TGcorrFR_up[i] < 0.0) { TGcorrFR_up[i] = 0.0; }
+    TGcorrFR_down[i] = corr->GetBinContent(i+1) - corr->GetBinError(i+1);
+    if (TGcorrFR_down[i] < 0.0) { TGcorrFR_down[i] = 0.0; }
+    //cout << "Corr = " << TGcorrFR[i] << " Up = " << TGcorrFR_up[i] << " Down = " << TGcorrFR_down[i] << endl;
   } // for loop
 
     TGraph * CorrFR = new TGraphErrors(6, TGpTbins, TGcorrFR, TGpTbinsErr, TGcorrFRErr);
@@ -585,9 +681,12 @@ void draw_comp_corrFR(TFile* OutputFile, TString channel, TString name_FR)
   legend->SetLineWidth(1);
   legend->SetFillColor(0);
   legend->SetFillStyle(0);
-  legend->AddEntry(h_fake, "Phase Space","lp");
-  legend->AddEntry(CorrFR, "Control Sample","lp");
+  legend->AddEntry(h_fake, "Uncorrected Fake Rate","lp");
+  legend->AddEntry(CorrFR, "Corrected Fake Rate","lp");
   legend->Draw();
+
+    TGraph * CorrFR_up = new TGraphErrors(6, TGpTbins, TGcorrFR_up, TGpTbinsErr, TGcorrFRErr);
+    TGraph * CorrFR_down = new TGraphErrors(6, TGpTbins, TGcorrFR_down, TGpTbinsErr, TGcorrFRErr);
 
   // -----------------------
   //        Write
@@ -595,6 +694,8 @@ void draw_comp_corrFR(TFile* OutputFile, TString channel, TString name_FR)
   OutputFile->cd();
   TC_corrFR->Write();
   CorrFR->Write("CorrFR_"+TString(name_FR));
+  CorrFR_up->Write("CorrFR_"+TString(name_FR)+"_up");
+  CorrFR_down->Write("CorrFR_"+TString(name_FR)+"_down");
 
   TC_corrFR->Print("PLOTS/png/" + channel + "_" + TString(TC_corrFR->GetName())+".png");
   TC_corrFR->Print("PLOTS/pdf/" + channel + "_" + TString(TC_corrFR->GetName())+".pdf");
@@ -604,7 +705,7 @@ void draw_comp_corrFR(TFile* OutputFile, TString channel, TString name_FR)
 
 
 //==================================================================================================================================
-void draw_comp_inclcorrFR(TFile* OutputFile, TString channel, TString name_FR)
+void draw_comp_inclcorrFR(TFile* OutputFile, TString channel, TH1F *corr, TString name_FR)
 // ==================================================================================================================================
 {
   TCanvas * TC_corrFR = new TCanvas("inclCORRFR_"+name_FR, "inclCORRFR_"+name_FR, 800, 600);
@@ -634,14 +735,10 @@ void draw_comp_inclcorrFR(TFile* OutputFile, TString channel, TString name_FR)
     TGpTbins[i] = pTbins[i];
     TGpTbinsErr[i] = pTbinsErr[i];
 
-    if(name_FR.Contains("EB")>0) {
-	TGcorrFR[i] = corrEB[i];
-	TGcorrFRErr[i] = corrEBErr[i];
-      }
-    else if(name_FR.Contains("EE")>0) {
-      TGcorrFR[i] = corrEE[i];
-      TGcorrFRErr[i] = corrEEErr[i];
-    }
+
+    TGcorrFR[i] = corr->GetBinContent(i+1);
+    if (TGcorrFR[i] < 0.0) { TGcorrFR[i] = 0.0; }
+    TGcorrFRErr[i] = corr->GetBinError(i+1);
   } // for loop
 
     TGraph * CorrFR = new TGraphErrors(1, TGpTbins, TGcorrFR, TGpTbinsErr, TGcorrFRErr);
@@ -665,7 +762,7 @@ void draw_comp_inclcorrFR(TFile* OutputFile, TString channel, TString name_FR)
 
 
 // ==============================================================
-void comp_fake(TString channel = "4e", TString mode = "rate", TString EXTRA = "")
+void comp_fake(TString channel = "Ze", TString mode = "rate", TString EXTRA = "")
 // ==============================================================
 {
   
@@ -695,15 +792,33 @@ void comp_fake(TString channel = "4e", TString mode = "rate", TString EXTRA = ""
 
   std::vector<TString> vec_file_name; vec_file_name.clear();
   //vec_file_name.push_back("out/outputCRZL_ALL_"+channel+"_76XMZ7.root");
-  vec_file_name.push_back("histograms/FR/"+channel+"/FR_CRZL_ALL_76X"+EXTRA+".root");
-  if(channel=="4e") {
-    //vec_file_name.push_back("out/outputCRZL_ALL_"+channel+"_76X.root");
-    vec_file_name.push_back("histograms/FR/"+channel+"/FR_CRZL_ALL_76XMZ7"+EXTRA+".root");
-    vec_file_name.push_back("histograms/FR/"+channel+"/FR_CRZL_ALL_76XMZ60"+EXTRA+".root");
-    vec_file_name.push_back("histograms/FR/"+channel+"/FR_CRZL_ALL_76XM3L5"+EXTRA+".root");
-  } // if 4e
+if (channel == "4e" or channel == "2mu2e")
+	{
+	vec_file_name.push_back("histograms/FR/Ze/FR_CRZL_ALL_76X"+EXTRA+".root");
+	}
+else
+	{
+	vec_file_name.push_back("histograms/FR/"+channel+"/FR_CRZL_ALL_76X"+EXTRA+".root");
+	}
+
+  if(channel=="Ze" or channel == "4e" or channel == "2mu2e")
+	{
+    	//vec_file_name.push_back("out/outputCRZL_ALL_"+channel+"_76X.root");
+    	vec_file_name.push_back("histograms/FR/Ze/FR_CRZL_ALL_76XMZ7"+EXTRA+".root");
+    	vec_file_name.push_back("histograms/FR/Ze/FR_CRZL_ALL_76XMZ60"+EXTRA+".root");
+    	vec_file_name.push_back("histograms/FR/Ze/FR_CRZL_ALL_76XM3L5"+EXTRA+".root");
+  	} // if 4e
+
+  if(channel=="Zmu" or channel == "4mu" or channel == "2e2mu")
+	{
+    	//vec_file_name.push_back("histograms/FR/Zmu/FR_CRZL_WZ_76X"+EXTRA+".root");
+    	//vec_file_name.push_back("histograms/FR/Zmu/FR_CRZL_DY50_76X"+EXTRA+".root");
+    	//vec_file_name.push_back("histograms/FR/Zmu/FR_CRZL_ZZ_76X"+EXTRA+".root");
+    	//vec_file_name.push_back("histograms/FR/Zmu/FR_CRZL_TT_76X"+EXTRA+".root");
+  	}
     
-  TString output_name = "histograms/computed_fakerate/"+channel+"/computedfakerate_"+EXTRA+".root";
+	TString output_name = "";
+  	output_name = "histograms/computed_fakerate/"+channel+"/computedfakerate_"+EXTRA+".root";
   
   TFile *OutPutFile = new TFile(output_name,"RECREATE","",0); 
 
@@ -727,6 +842,30 @@ void comp_fake(TString channel = "4e", TString mode = "rate", TString EXTRA = ""
   name_legend[0] = "Probe electrons"; //pthat>5"; //"with UE";
   name_legend[1] = "Passing Probe electrons"; //pthat>10"; //w/o UE";
 
+
+  Float_t xbins[7] = {7,10,20,30,40,50,80};
+
+  TH1F *corr_EB;
+  corr_EB = new TH1F("Corr_EB","Lep3_pT;Fake Rate;3^{rd} Lepton p_{T}",6, xbins);
+  TH1F *corr_EE;
+  corr_EE = new TH1F("Corr_EE","Lep3_pT;Fake Rate;3^{rd} Lepton p_{T}",6, xbins);
+
+  TH1F *corr_EB_up;
+  corr_EB_up = new TH1F("Corr_EB_up","Lep3_pT;Fake Rate;3^{rd} Lepton p_{T}",6, xbins);
+  TH1F *corr_EE_up;
+  corr_EE_up = new TH1F("Corr_EE_up","Lep3_pT;Fake Rate;3^{rd} Lepton p_{T}",6, xbins);
+
+  TH1F *corr_EB_down;
+  corr_EB_down = new TH1F("Corr_EB_down","Lep3_pT;Fake Rate;3^{rd} Lepton p_{T}",6, xbins);
+  TH1F *corr_EE_down;
+  corr_EE_down = new TH1F("Corr_EE_down","Lep3_pT;Fake Rate;3^{rd} Lepton p_{T}",6, xbins);
+
+  TH1F *mhits_EB;
+  mhits_EB = new TH1F("MHits_EB","Lep3_pT",6, xbins);
+  TH1F *mhits_EE;
+  mhits_EE = new TH1F("MHits_EE","Lep3_pT",6, xbins);
+
+
   //draw_comp_histo(TFile * file, TFile * OutputFile, TString name_histo_truth, TString name_histo_simu, int REBIN, int range_min, int range_max, 
   //bool print, bool norm, bool do_reweight, bool REBIN1, bool do_turnon, TString * name_legend)
   
@@ -744,19 +883,21 @@ void comp_fake(TString channel = "4e", TString mode = "rate", TString EXTRA = ""
   for(unsigned int ifile=0;ifile<vec_file_name.size();ifile++) {
     TFile *file = TFile::Open(vec_file_name.at(ifile));
     TString reduced_name = vec_file_name.at(ifile);
-    reduced_name.ReplaceAll("histograms/FR/"+channel+"/FR_CRZL_ALL_", ""); 
+    reduced_name.ReplaceAll("histograms/FR/"+channel+"/FR_CRZL_", "");
+    reduced_name.ReplaceAll("histograms/FR/Ze/FR_CRZL_", "");
+
     reduced_name.ReplaceAll(".root", ""); 
     cout << "reduce = " << reduced_name << endl;
     draw_comp_histo(file, channel, OutPutFile,"Lep3_pT_all_EB_afterMET",  "Lep3_pT_all_EB_afterIDISO", rebin_pT, 0,80, PRINT, false, false, 1, true, name_legend, reduced_name);
     draw_comp_histo(file, channel, OutPutFile,"Lep3_pT_all_EE_afterMET",  "Lep3_pT_all_EE_afterIDISO", rebin_pT, 0,80, PRINT, false, false, 1, true, name_legend, reduced_name);
 
 
-    if(channel=="4e" or channel == "2mu2e") {
+    if(channel=="Ze" or channel == "4e" or channel == "2mu2e") {
       name_vecEB.push_back("TG_Lep3_pT_all_EB_afterMET_"+reduced_name);
       name_vecEE.push_back("TG_Lep3_pT_all_EE_afterMET_"+reduced_name);
     } // if 4e
 
-    if(channel=="4mu" or channel == "2e2mu") { 
+    if(channel=="Zmu") { 
       name_vecEB.push_back("TG_Lep3_pT_all_EB_afterMET_"+reduced_name);
       name_vecEB.push_back("TG_Lep3_pT_all_EE_afterMET_"+reduced_name);
     } // if 4mu
@@ -766,7 +907,7 @@ void comp_fake(TString channel = "4e", TString mode = "rate", TString EXTRA = ""
   
   
 
-  if(channel=="4e" or channel=="2mu2e") {
+  if(channel=="Ze" or channel == "4e" or channel == "2mu2e") {
     // -------------------------------------
     // Compare Lepton FakeRate (DATA, 4e)
     // --------------------------------------
@@ -777,8 +918,8 @@ void comp_fake(TString channel = "4e", TString mode = "rate", TString EXTRA = ""
     name_legend[2] = "60<MZ<120"; 
     name_legend[3] = "|M3L-91.2|<5";
     
-    draw_comp_vecturnons(OutPutFile, channel, name_vecEB, 1, 0, 80, PRINT, name_legend, "SS");
-    draw_comp_vecturnons(OutPutFile, channel, name_vecEE, 1, 0, 80, PRINT, name_legend, "SS");
+    draw_comp_vecturnons(OutPutFile, "Ze", name_vecEB, 1, 0, 80, PRINT, name_legend, "SS");
+    draw_comp_vecturnons(OutPutFile, "Ze", name_vecEE, 1, 0, 80, PRINT, name_legend, "SS");
 
     // --------------------------------------
     //         FR vs Missing Hits
@@ -788,55 +929,86 @@ void comp_fake(TString channel = "4e", TString mode = "rate", TString EXTRA = ""
     {
     //Lep3pT710, Lep3pT1020, Lep3pT2030, Lep3pT3040, Lep3pT4050,Lep3pT5080
     TString pTbins[6] = {"710", "1020", "2030", "3040", "4050", "5080"};
-    TString file_ZLL = "histograms/FR/4e/FR_CRZLL_ALL_76X.root";
-   
-    if(EXTRA.Contains("incl")>0) {
-      comp_FRMhits(vec_file_name, channel, name_vecEB, OutPutFile, "Lep3_inclmhits_EB", file_ZLL, "Lep34_inclmhits_EB");
-      comp_FRMhits(vec_file_name, channel, name_vecEE, OutPutFile, "Lep3_inclmhits_EE", file_ZLL, "Lep34_inclmhits_EE");
-    }
-    else {
-     cout << "Missing hits loop !" << endl;
-      for(int i=0;i<6;i++) {
-	comp_FRMhits(vec_file_name, channel, name_vecEB, OutPutFile, "Lep3_mhits_EB_pT"+pTbins[i], file_ZLL, "Lep34_mhits_EB_pT"+pTbins[i]);
-	comp_FRMhits(vec_file_name, channel, name_vecEE, OutPutFile, "Lep3_mhits_EE_pT"+pTbins[i], file_ZLL, "Lep34_mhits_EE_pT"+pTbins[i]);
-      } // for loop on pT bins
+    TString file_ZLL = "histograms/FR/"+ channel +"/FR_CRZLL_ALL_ALL_76X.root";
+
+    if(EXTRA.Contains("incl")>0)
+	{
+      	comp_FRMhits(vec_file_name, channel, name_vecEB, corr_EB, corr_EB_up, corr_EB_down, mhits_EB, OutPutFile, "Lep3_inclmhits_EB", file_ZLL, "Lep34_inclmhits_EB");
+      	comp_FRMhits(vec_file_name, channel, name_vecEE, corr_EE, corr_EE_up, corr_EE_down, mhits_EE, OutPutFile, "Lep3_inclmhits_EE", file_ZLL, "Lep34_inclmhits_EE");
+    	}
+    else
+	{
+      	for(int i=0; i<6; i++)
+		{
+		comp_FRMhits(vec_file_name, channel, name_vecEB, corr_EB, corr_EB_up, corr_EB_down, mhits_EB, OutPutFile, "Lep3_mhits_EB_pT"+pTbins[i], file_ZLL, "Lep34_mhits_EB_pT"+pTbins[i]);
+		comp_FRMhits(vec_file_name, channel, name_vecEE, corr_EE, corr_EE_up, corr_EE_down, mhits_EE, OutPutFile, "Lep3_mhits_EE_pT"+pTbins[i], file_ZLL, "Lep34_mhits_EE_pT"+pTbins[i]);
+      		} // for loop on pT bins
       //void comp_FRMhits(std::vector<TString> vec_file_name, std::vector<TString> vec_fakename_EBEE, TFile* OutputFile, TString mhitsname)
-    } // else 
+    	} // else 
     
+
+    
+
     // --------------------------------------
     //         FR vs Corrected FR
     // --------------------------------------
     //void draw_comp_inclcorrFR(TFile* OutputFile, TString name_FR)
-    if(EXTRA.Contains("incl")>0) {
-      draw_comp_inclcorrFR(OutPutFile, channel, name_vecEB.at(0));
-      draw_comp_inclcorrFR(OutPutFile, channel, name_vecEE.at(0));
-    }
-    else {
-      draw_comp_corrFR(OutPutFile, channel, name_vecEB.at(0));
-      draw_comp_corrFR(OutPutFile, channel, name_vecEE.at(0));
-    } // else pT 
-   
-    }
-  } // if channel = 4e
+    if(EXTRA.Contains("incl")>0)
+	{
+      	draw_comp_inclcorrFR(OutPutFile, channel, corr_EB, name_vecEB.at(0));
+      	draw_comp_inclcorrFR(OutPutFile, channel, corr_EE, name_vecEE.at(0));
+    	}
+    else
+	{
+      	draw_comp_corrFR(OutPutFile, channel, corr_EB, name_vecEB.at(0));
+      	draw_comp_corrFR(OutPutFile, channel, corr_EE, name_vecEE.at(0));
+    	} // else pT 
+  
+    } //correction 
+  } // if channel = 4e/Z2e/2mu2e
 
 
+    
 
    // -------------------------------------
    // Compare Lepton FakeRate (DATA, 4mu)
    // --------------------------------------
-  if(channel=="4mu" or channel=="2e2mu") {
+  if(channel=="Zmu") {
     //void draw_comp_vecturnons(TFile * OutputFile, std::vector<TString> name_TG, int REBIN, double range_min, double range_max, 
     //bool print, TString * name_legend, TString extra_name)
-    name_legend[0] = "Barrel"; //0<MZ<120"; 
-    name_legend[1] = "Endcaps"; //|MZ-91.2|<10";
+    name_legend[0] = "Data"; 
+    name_legend[1] = "WZ";
+    name_legend[2] = "DY50";
+    name_legend[3] = "ZZ";
+    name_legend[4] = "TT";
+
+    name_legend[0] = "Barrel"; 
+    name_legend[1] = "Endcap"; 
     
-    draw_comp_vecturnons(OutPutFile, channel, name_vecEB, 1, 0, 80, PRINT, name_legend, "SS4mu");
+    draw_comp_vecturnons(OutPutFile, channel, name_vecEB, 1, 0, 80, PRINT, name_legend, "SS");
+
+
+    //draw_comp_vecturnons(OutPutFile, channel, name_vecEE, 1, 0, 80, PRINT, name_legend, "SS");
+
   } // if 4mu
  
 
   cout << "---> Draw Comp Turnons " << endl;
 
   cout << "" << endl;
+
+  if (mode == "correction")
+	{
+	plot_correction(corr_EB, corr_EB_up, corr_EB_down, channel, "barrel");
+	plot_correction(corr_EE, corr_EE_up, corr_EE_down, channel, "endcap");
+	plot_mhits(mhits_EB, mhits_EE, channel);
+	corr_EE->Write();
+        corr_EB->Write();
+	corr_EE_up->Write();
+        corr_EB_up->Write();
+	corr_EE_down->Write();
+        corr_EB_down->Write();
+	}
 
   cout << "---------------> Closing File : " << output_name  << endl;
 

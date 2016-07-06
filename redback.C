@@ -13,6 +13,7 @@
 #include <TGraph.h>
 #include <TTree.h>
 #include <TBranch.h>
+#include <TCanvas.h>
 
 #include "ZZAnalysis/AnalysisStep/src/Category.cc"
 
@@ -41,7 +42,7 @@ int findBin(double LepPt, double LepId) {
 }
 
 // ========================================================================================================================
-void redback(TString FS = "4e", TString dataset = "ALL", TString mode = "estimate", TString cat = "ALL", TString EXTRA="")
+void redback(TString FS = "4e", TString dataset = "ALL", TString mode = "estimate", TString cat = "ALL", TString EXTRA="76X")
 // ========================================================================================================================
 {
   cout << "---> Working with Final State : " << FS << endl;
@@ -71,7 +72,7 @@ void redback(TString FS = "4e", TString dataset = "ALL", TString mode = "estimat
 
   TString dataflag = "";
   if( dataset=="DY50" )      dataflag = "DYJetsToLL_M50";
-  else if( dataset=="TT" )   dataflag = "TTTo2L2Nu"; //"TTTo2L2nu";
+  else if( dataset=="TT" )   dataflag = "TTJets"; //"TTTo2L2nu";
   else if( dataset=="WZ" )  dataflag = "WZTo3LNu";
   else if( dataset=="ZZ" )   dataflag =  "ZZTo4l";
   else if( dataset=="DEG")  { dataflag= "DoubleEGAll"; isMC=false; }
@@ -83,61 +84,98 @@ void redback(TString FS = "4e", TString dataset = "ALL", TString mode = "estimat
   // ------------------------------------------------
   // FakeRates
   // ------------------------------------------------
-  cout << "---> Open Fake Rates " << endl;
+  //cout << "---> Open Fake Rates " << endl;
   //TFile* fFakeRates = TFile::Open(inputFileFakeRates.c_str());
  
-  cout << "---> Open Electron Fake Rates " << endl;
-  TString file_electron ;
-  if(EXTRA.Contains("incl")>0) file_electron = "histograms/computed_fakerate/4e/computedfakerate_incl.root"; 
-  else file_electron = "histograms/computed_fakerate/4e/computedfakerate_.root"; 
-  cout << "Using : " << file_electron << endl;
-  TFile * f_electron = TFile::Open(file_electron);
+  //cout << "---> Open Fake Rates " << endl;
+  TString temp_FS = FS;
+  if (FS == "4mu" or FS == "2e2mu") { temp_FS = "Zmu"; }
+  TString file;
+  if(EXTRA.Contains("incl")>0) file = "histograms/computed_fakerate/4e/computedfakerate_incl.root"; 
+  else file = "histograms/computed_fakerate/"+temp_FS+"/computedfakerate_.root"; 
+  cout << "Using fake rates : " << file << endl;
+  TFile * f = TFile::Open(file);
   
-  cout << "---> Open Muon Fake Rates " << endl;
-  TString file_muon = "histograms/computed_fakerate/4mu/computedfakerate_.root";
-  cout << "Using : " << file_muon << endl;
-  TFile * f_muon = TFile::Open(file_muon);
-  //
-  TGraph* h1D_FRmu_EB = (TGraph*)f_muon->Get("TG_Lep3_pT_all_EB_afterMET_76X");
-  TGraph* h1D_FRmu_EE = (TGraph*)f_muon->Get("TG_Lep3_pT_all_EE_afterMET_76X"); 
-  //cout << "muon" << endl;
-  double * fakemu_EB = new double[10]; fakemu_EB = h1D_FRmu_EB->GetY();
+
+  //double * fakemu_EB = new double[10]; fakemu_EB = h1D_FRmu_EB->GetY();
   //cout << "ee" << endl;
-  double * fakemu_EE = new double[10]; fakemu_EE = h1D_FRmu_EE->GetY();
+  //double * fakemu_EE = new double[10]; fakemu_EE = h1D_FRmu_EE->GetY();
   //
-  cout << "Open Electron" << endl;
+  //cout << "Open Electron" << endl;
   TString fakeEB = "";
   TString fakeEE = "";
-  if (mode == "estimate")
+  TString fakeEB_up = "";
+  TString fakeEE_up = "";
+  TString fakeEB_down = "";
+  TString fakeEE_down = "";
+  if (mode == "estimate" or temp_FS == "Zmu")
 	{
-  	fakeEB = "TG_Lep3_pT_all_EB_afterMET_76X";
-  	fakeEE = "TG_Lep3_pT_all_EE_afterMET_76X";
+  	fakeEB = "TG_Lep3_pT_all_EB_afterMET_ALL_76X";
+  	fakeEE = "TG_Lep3_pT_all_EE_afterMET_ALL_76X";
   	if(EXTRA.Contains("incl")>0)
 		{ 
-      		fakeEB = "TG_Lep3_pT_all_EB_afterMET_76Xincl";
-      		fakeEE = "TG_Lep3_pT_all_EE_afterMET_76Xincl";
+      		fakeEB = "TG_Lep3_pT_all_EB_afterMET_ALL_76Xincl";
+      		fakeEE = "TG_Lep3_pT_all_EE_afterMET_ALL_76Xincl";
     		}
 	}
-  if (mode == "final")
+  if (mode == "final" and temp_FS != "Zmu")
 	{
-  	fakeEB = "CorrFR_TG_Lep3_pT_all_EB_afterMET_76X";
-  	fakeEE = "CorrFR_TG_Lep3_pT_all_EE_afterMET_76X";
+  	fakeEB = "CorrFR_TG_Lep3_pT_all_EB_afterMET_ALL_76X";
+  	fakeEE = "CorrFR_TG_Lep3_pT_all_EE_afterMET_ALL_76X";
+  	fakeEB_up = "CorrFR_TG_Lep3_pT_all_EB_afterMET_ALL_76X_up";
+  	fakeEE_up = "CorrFR_TG_Lep3_pT_all_EE_afterMET_ALL_76X_up";
+  	fakeEB_down = "CorrFR_TG_Lep3_pT_all_EB_afterMET_ALL_76X_down";
+  	fakeEE_down = "CorrFR_TG_Lep3_pT_all_EE_afterMET_ALL_76X_down";
   	if(EXTRA.Contains("incl")>0)
 		{ 
-      		fakeEB = "CorrFR_TG_Lep3_pT_all_EB_afterMET_76Xincl";
-      		fakeEE = "CorrFR_TG_Lep3_pT_all_EE_afterMET_76Xincl";
+      		fakeEB = "CorrFR_TG_Lep3_pT_all_EB_afterMET_ALL_76Xincl";
+      		fakeEE = "CorrFR_TG_Lep3_pT_all_EE_afterMET_ALL_76Xincl";
+      		fakeEB_up = "CorrFR_TG_Lep3_pT_all_EB_afterMET_ALL_76Xincl_up";
+      		fakeEE_up = "CorrFR_TG_Lep3_pT_all_EE_afterMET_ALL_76Xincl_up";
+      		fakeEB_down = "CorrFR_TG_Lep3_pT_all_EB_afterMET_ALL_76Xincl_down";
+      		fakeEE_down = "CorrFR_TG_Lep3_pT_all_EE_afterMET_ALL_76Xincl_down";
     		}
 	}
-  TGraph* h1D_FRel_EB = (TGraph*)f_electron->Get(fakeEB);
-  TGraph* h1D_FRel_EE = (TGraph*)f_electron->Get(fakeEE);
-  cout << "Tgraphs : " << fakeEB << " " << fakeEE << endl;
-  double * fakeele_EB = h1D_FRel_EB->GetY();
-  double * fakeele_EE = h1D_FRel_EE->GetY();
+
+cout << "opening standard fake rates... " << fakeEB << "|" << fakeEE << endl;
+
+   TGraph* h1D_FRel_EB = 0;
+   f->GetObject(fakeEB,h1D_FRel_EB);
+   if (h1D_FRel_EB == 0) { cout<< fakeEB << " in " << file << " not found!" <<endl; return; }
+
+  
+  TGraph* h1D_FRel_EE = (TGraph*)f->Get(fakeEE);
+  //cout << "Tgraphs : " << fakeEB << " " << fakeEE << endl;
+  double * fake_EB = h1D_FRel_EB->GetY();
+  double * fake_EE = h1D_FRel_EE->GetY();
+
+  double *fake_EB_up = 0;
+  double *fake_EE_up = 0;
+  double *fake_EB_down = 0;
+  double *fake_EE_down = 0;
+
+cout << "fake rates 2" << endl;
+
+if (mode == "final" and temp_FS != "Zmu")
+	{
+	//cout << "opening extra graphs..." << endl;
+	TGraph* h1D_FRel_EB_up = (TGraph*)f->Get(fakeEB_up);
+  	TGraph* h1D_FRel_EE_up = (TGraph*)f->Get(fakeEE_up);
+  	//cout << "Tgraphs Up : " << fakeEB_up << " " << fakeEE_up << endl;
+  	fake_EB_up = h1D_FRel_EB_up->GetY();
+  	fake_EE_up = h1D_FRel_EE_up->GetY();
+
+  	TGraph* h1D_FRel_EB_down = (TGraph*)f->Get(fakeEB_down);
+  	TGraph* h1D_FRel_EE_down = (TGraph*)f->Get(fakeEE_down);
+  	//cout << "Tgraphs Down : " << fakeEB_down << " " << fakeEE_down << endl;
+  	fake_EB_down = h1D_FRel_EB_down->GetY();
+  	fake_EE_down = h1D_FRel_EE_down->GetY();
+	}
   
   // ------------------------------------------------
   // OutPut File
   // ------------------------------------------------
-  TString outputfile_name = "histograms/FR/"+FS+"/FR_CRZLL_"+dataset+"_"+EXTRA+".root";
+  TString outputfile_name = "histograms/FR/"+FS+"/FR_CRZLL_"+dataset+"_"+cat+"_"+EXTRA+".root";
   cout << "---> Output File : " << outputfile_name << endl;
   TFile * OutputFile = new TFile(outputfile_name, "RECREATE"); //, "", 5);
   // ------------------------------------------------
@@ -147,7 +185,7 @@ void redback(TString FS = "4e", TString dataset = "ALL", TString mode = "estimat
 
   //myfile = new TFile("/data_CMS/cms/ochando/CJLSTReducedTree/151202/DoubleEG2015D/ZZ4lAnalysis.root");
   //myfile = new TFile("/data_CMS/cms/ochando/CJLSTReducedTree/160111_ggZZincomplete/"+dataflag+"/ZZ4lAnalysis.root");
-  TString ntuple = "root://lxcms03//data3/Higgs/160225/"+dataflag+"/ZZ4lAnalysis.root";
+  TString ntuple = "root://lxcms03//data3/Higgs/160624/"+dataflag+"/ZZ4lAnalysis.root";
   cout << "Reading " << ntuple << "..." << endl;
   myfile = TFile::Open(ntuple);
 
@@ -346,7 +384,9 @@ void redback(TString FS = "4e", TString dataset = "ALL", TString mode = "estimat
   TH1F* ICUT 			= new TH1F("ICUT","ICUT",50,0.,50.);  
   
   TH1F* h_ZZ_Mass = new TH1F("ZZmass","ZZmass",1000, 0, 1000);
+  h_ZZ_Mass->Sumw2();
   TH1F* h_ZZ_MassW = new TH1F("ZZmassW","ZZmassW",1000, 0, 1000);
+  h_ZZ_MassW->Sumw2();
   TH1F* h_Z1_Mass = new TH1F("Z1mass","Z1mass",200, 0, 200);
   TH1F* h_Z2_Mass = new TH1F("Z2mass","Z2mass",200, 0, 200);
   
@@ -397,7 +437,7 @@ void redback(TString FS = "4e", TString dataset = "ALL", TString mode = "estimat
   TString cutdes[40];
   float pi = acos(-1.);
   
-  double expected_zx = 0;
+  double expected_zx = 0.0, expected_zx_up = 0.0, expected_zx_down = 0.0;
 
   float WEIGHT = 1;
   int currentFinalState;
@@ -426,7 +466,9 @@ void redback(TString FS = "4e", TString dataset = "ALL", TString mode = "estimat
     //cout << "i   = " << iEvt << endl;
     //mytree->LoadTree(iEvt);
     float_t percent = iEvt * 100 / MAX; 
-    if (iEvt % 10000 == 0 && iEvt > 0) cout<< "Loop: processing event  " << iEvt << " (" << percent << "%)" << endl;    
+    int step = 1000;
+    if (isMC) step = 10000;
+    if (iEvt % step == 0 && iEvt > 0) cout<< "Loop: processing event  " << iEvt << " (" << percent << "%)" << endl;    
     
     mytree->GetEntry(iEvt);
     
@@ -446,6 +488,14 @@ void redback(TString FS = "4e", TString dataset = "ALL", TString mode = "estimat
      
     Int_t icut = 0;
     int index = 0;
+
+
+	if (!isMC)
+	{
+	if (RunNumber > 274443) { continue; }
+	else { cutdes[icut] = "Runs between 271036-274443 "; ICUT->Fill((Float_t)icut,WEIGHT); icut++; }
+	}
+
     //if ( _debug ) {cout<<"-------> Beginning preselection cuts"<<endl;}
     cutdes[icut] = "No cut"; ICUT->Fill((Float_t)icut,WEIGHT); icut++; 
     //cout << "CRflag = " << CRflag << endl;
@@ -631,11 +681,15 @@ void redback(TString FS = "4e", TString dataset = "ALL", TString mode = "estimat
     } // for loop on lepton 3 & 4
 
 
-
+//if (mode == "final" and temp_FS != "Zmu") { cout << "estimation here..." <<endl; }
  
     //OSSS*
     double fakes[2];
+    double fakes_up[2] = {0.0, 0.0};
+    double fakes_down[2] = {0.0, 0.0};
     
+//if (mode == "final" and temp_FS != "Zmu") { cout << "before the loop..." << endl; }
+
     for(int i=0;i<2;i++) {
       Float_t myLepPt = LepPt->at(2+i) >=80. ? 79. : LepPt->at(2+i);
       Int_t   myLepID = abs(LepLepId->at(2+i));
@@ -644,23 +698,55 @@ void redback(TString FS = "4e", TString dataset = "ALL", TString mode = "estimat
       //cout << "pt = " <<  LepPt->at(2+i) << " eta = " << LepEta->at(2+i)  << " id =" << myLepID << " bin = " << bin << endl;
       //cout << "fakeEB = " << fakeele_EB[bin] << " EE = " << fakeele_EE[bin] << endl;
       
-      if(fabs(LepEta->at(2+i)) < eta_cut) {
-	if(myLepID==11) fakes[i] = fakeele_EB[bin];
-	if(myLepID==13) fakes[i] = fakemu_EB[bin];
-      } // Barrel
-      else {
-	if(myLepID==11) fakes[i] = fakeele_EE[bin];
-	if(myLepID==13) fakes[i] = fakemu_EE[bin];
-      } // else endcap
+      if(fabs(LepEta->at(2+i)) < eta_cut)
+	{
+	fakes[i] = fake_EB[bin];
+	if (mode == "final" and temp_FS != "Zmu")
+		{
+		//cout << "problem in EB..." << endl;
+		fakes_up[i] = fake_EB_up[bin];
+		fakes_down[i] = fake_EB_down[bin];
+		}
+      	}
+      else
+	{
+	fakes[i] = fake_EE[bin];
+	if (mode == "final" and temp_FS != "Zmu")
+		{
+		//cout << "problem in EE..." << endl;
+		fakes_up[i] = fake_EE_up[bin];
+		fakes_down[i] = fake_EE_down[bin];
+		}
+	} // else endcap
       
       //cout << "fake = " << fakes[i] << endl;
     } // for loop on leptons
+
+
+//if (mode == "final" and temp_FS != "Zmu") { cout << "after the loop..." << endl; }
       
     double temp_zx = OSSS * fakes[0]*fakes[1];
+    double temp_zx_up = 0.0, temp_zx_down = 0.0;
+
+	if (mode == "final" and temp_FS != "Zmu")
+	{
+    	temp_zx_up = OSSS * fakes_up[0]*fakes_up[1];
+    	temp_zx_down = OSSS * fakes_down[0]*fakes_down[1];
+	//cout << "Nominal : " << temp_zx << " first = " << fakes[0] << " second = " << fakes[1] << endl;
+	//cout << "Up : " << temp_zx_up << " first = " << fakes_up[0] << " second = " << fakes_up[1] << endl;
+	//cout << "Down : " << temp_zx_down << " first = " << fakes_down[0] << " second = " << fakes_down[1] << endl;
+	}
     
     expected_zx += temp_zx;
+	if (mode == "final" and temp_FS != "Zmu")
+	{
+    	expected_zx_up += temp_zx_up;
+    	expected_zx_down += temp_zx_down;
+	}
 
-    h_ZZ_MassW->Fill(ZZMass, temp_zx);
+//if (mode == "final" and temp_FS != "Zmu") { cout << "end of estimation" << endl; }
+
+    h_ZZ_MassW->Fill(ZZMass, temp_zx*WEIGHT);
 
     // ===========================================
     // Full cuts
@@ -679,15 +765,42 @@ void redback(TString FS = "4e", TString dataset = "ALL", TString mode = "estimat
      nselected++;
   } // END of the loop
 
+  double int_error = 0.0;
+  h_ZZ_MassW->IntegralAndError(1,h_ZZ_MassW->GetNbinsX(),int_error);
+
+  if (cat == "ALL" or cat == "untagged")
+	{
+	TCanvas * c1 = new TCanvas("c1", "c1", 800, 600);
+	TH1 *h_ZZ_MassW_rebin = h_ZZ_MassW->Rebin(10,"h_ZZ_MassW_rebin");
+	//TF1 *fit; 
+	if (FS == "2mu2e" or FS == "4mu") { h_ZZ_MassW_rebin->Fit("landau","M","",90,400); }
+        if (FS == "4e" or FS == "2e2mu")
+		{
+		h_ZZ_MassW_rebin->Fit("landau","M","",90,400);
+		}
+	c1->Print("PLOTS/png/"+ FS + "_fit_" + mode + "_" + cat +".png");
+	c1->Close();
+	}
+
+
   cout << "icut_max = " << icut_MAX << endl;
   //if(icut_MAX<2) icut_MAX = 30;
   cout << "======================================================================" << endl;
-  for ( Int_t i=0; i<10 ; i++ )
+  for ( Int_t i=0; i<11 ; i++ )
     cout << "Cut " << setw(3) << i << " : " << setw(30) << cutdes[i] << " : " << ICUT->GetBinContent(i+1) << endl;
   //cout << "Cut " << i << " : " << ICUT->GetBinContent(i) << endl;
   cout << "======================================================================" << endl;
   cout << "Total Number of events selected = "  << nselected                       << endl;
-  cout << "Total Number of Reducible Back = "  << expected_zx                   << endl;
+  cout << "Total Number of Reducible Background = "  << expected_zx                   << endl;
+  cout << "Integral Error = " << int_error << " (" << 100*int_error/expected_zx << "%)" << endl;
+if (mode == "final" and temp_FS != "Zmu")
+	{
+  	cout << "Total Number of Reducible Background Up = "  << expected_zx_up                << endl;
+  	cout << "Total Number of Reducible Background Down = "  << expected_zx_down            << endl;
+	double err_up = expected_zx_up - expected_zx;
+	double err_down = expected_zx - expected_zx_down;
+  	cout << "Total Error: +" << err_up << " -" << err_down <<endl;
+	}
   //cout << "Total Number of events written  = "  << nwrite                          << endl;
   cout << "======================================================================" << endl;
 

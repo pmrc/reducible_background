@@ -24,7 +24,7 @@ bool test_bit( int mask, unsigned int iBit ) {
 }
 
 // ========================================================================================================================
-void loopFake(TString FS = "4e", TString dataset = "ALL", TString branch = "CRZL", TString EXTRA="76X")
+void loopFake(TString FS = "Ze", TString dataset = "ALL", TString branch = "CRZL", TString EXTRA="76X")
 // ========================================================================================================================
 {
   cout << "---> Working with Final State:       " << FS << endl;
@@ -32,8 +32,8 @@ void loopFake(TString FS = "4e", TString dataset = "ALL", TString branch = "CRZL
   cout << "---> Working with Branch:            " << branch << endl;
   cout << "---> Working with Extra definitions: " << EXTRA << endl;
 
-  if( (FS!="4e") && (FS!="4mu") && (FS!="2e2mu") && (FS!="2mu2e") )
-    { cout << " ERROR ! FinalState should be 4e, 4mu, 2e2mu or 2mu2e" << endl; return; }
+  if( (FS!="Ze") && (FS!="Zmu"))
+    { cout << " ERROR ! FinalState should be Ze, Zmu" << endl; return; }
 
 
   float lumi = 2.6; 
@@ -49,7 +49,7 @@ void loopFake(TString FS = "4e", TString dataset = "ALL", TString branch = "CRZL
 
   TString dataflag = "";
   if( dataset=="DY50" )      dataflag = "DYJetsToLL_M50";
-  else if( dataset=="TT" )   dataflag = "TTTo2L2Nu"; //"TTTo2L2nu";
+  else if( dataset=="TT" )   dataflag = "TTJets"; //"TTTo2L2nu";
   else if( dataset=="WZ" )  dataflag = "WZTo3LNu";
   else if( dataset=="ZZ" )   dataflag =  "ZZTo4l";
   else if( dataset=="ALL")   { dataflag= "AllData"; isMC=false; }
@@ -69,7 +69,7 @@ void loopFake(TString FS = "4e", TString dataset = "ALL", TString branch = "CRZL
   TFile *myfile;
   //myfile = TFile::Open("root://lxcms03//data3/Higgs/160225/ggH125/ZZ4lAnalysis.root");
   //cout << "Opening file!" << endl;
-  TString ntuple = "root://lxcms03//data3/Higgs/160613_76X/"+dataflag+"/ZZ4lAnalysis.root";
+  TString ntuple = "root://lxcms03//data3/Higgs/160624/"+dataflag+"/ZZ4lAnalysis.root";
   cout << "Reading " << ntuple << "..." << endl;
   myfile = TFile::Open(ntuple);
 
@@ -408,9 +408,16 @@ void loopFake(TString FS = "4e", TString dataset = "ALL", TString branch = "CRZL
     // ===========================================
     // Selection
     // ===========================================
-     
+
     Int_t icut = 0;
     int index = 0;
+     
+	if (!isMC)
+	{
+	if (RunNumber > 274443) { continue; }
+	else { cutdes[icut] = "Runs between 271036-274443"; ICUT->Fill((Float_t)icut,WEIGHT); icut++; }
+	}
+
     //if ( _debug ) {cout<<"-------> Beginning preselection cuts"<<endl;}
     // cutdes[icut] = "No cut"; ICUT->Fill((Float_t)icut,WEIGHT); icut++; 
     // //cout << "CRflag = " << CRflag << endl;
@@ -428,10 +435,8 @@ void loopFake(TString FS = "4e", TString dataset = "ALL", TString branch = "CRZL
     double eta_cut = 0;
     // if(FS=="4e" && (Z1Flav==-121 && Z2Flav==+121)) pass_flavor = true;
     //    if(FS=="4mu" && (Z1Flav==-169 && Z2Flav==+169)) pass_flavor = true;
-    if(FS=="2mu2e" && Z1Flav==-169 && fabs(LepLepId->at(2)) == 11) { pass_flavor = true; eta_cut = 1.479; }
-    if(FS=="2e2mu" && Z1Flav==-121 && fabs(LepLepId->at(2)) == 13) { pass_flavor = true; eta_cut = 1.2; }
-    if(FS=="4e"    && Z1Flav==-121 && fabs(LepLepId->at(2)) == 11) { pass_flavor = true; eta_cut = 1.479; }
-    if(FS=="4mu" && Z1Flav==-169 && fabs(LepLepId->at(2)) == 13) { pass_flavor = true; eta_cut = 1.2; }
+    if(FS=="Ze"    && fabs(LepLepId->at(2)) == 11) { pass_flavor = true; eta_cut = 1.479; }
+    if(FS=="Zmu" && fabs(LepLepId->at(2)) == 13) { pass_flavor = true; eta_cut = 1.2; }
     
     //  bool pass_flavor = false;
     // if(trig == "ee" && (Z1Flav==-121 && (LepLepId->at(2) ==+11 || LepLepId->at(2) == -11))) pass_flavor = true;
