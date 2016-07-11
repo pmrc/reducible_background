@@ -24,7 +24,7 @@ bool test_bit( int mask, unsigned int iBit ) {
 }
 
 // ========================================================================================================================
-void loopFake(TString FS = "Ze", TString dataset = "ALL", TString branch = "CRZL", TString EXTRA="76X")
+void loopFake(TString FS = "Ze", TString dataset = "ALL", TString branch = "CRZL", TString EXTRA="80XA")
 // ========================================================================================================================
 {
   cout << "---> Working with Final State:       " << FS << endl;
@@ -35,8 +35,31 @@ void loopFake(TString FS = "Ze", TString dataset = "ALL", TString branch = "CRZL
   if( (FS!="Ze") && (FS!="Zmu"))
     { cout << " ERROR ! FinalState should be Ze, Zmu" << endl; return; }
 
+  float lumi = 0.0;
+  TString path = "";
 
-  float lumi = 2.6; 
+
+  if(EXTRA.Contains("76X")>0)
+	{ 
+	lumi = 2.6;
+	path = "160613_76X";
+	}
+
+  if(EXTRA.Contains("80XA")>0)
+	{ 
+	lumi = 2.6;
+	path = "160624";
+	}
+
+  if(EXTRA.Contains("80XB")>0)
+	{ 
+	lumi = 6.0;
+	path = "160624";
+	}
+
+  if (lumi == 0.0 or path == "")
+	{ cout << "Data taking era not valid!" << endl; return; }
+
   cout << "---> Working with : " << lumi << " fb-1"  << endl;
   
   //gROOT->ProcessLine(".L /home/llr/cms/ochando/CJLST/CMSSW_7416p1_ZX/src/ZZAnalysis/AnalysisStep/interface/FinalStates.h");
@@ -69,7 +92,7 @@ void loopFake(TString FS = "Ze", TString dataset = "ALL", TString branch = "CRZL
   TFile *myfile;
   //myfile = TFile::Open("root://lxcms03//data3/Higgs/160225/ggH125/ZZ4lAnalysis.root");
   //cout << "Opening file!" << endl;
-  TString ntuple = "root://lxcms03//data3/Higgs/160624/"+dataflag+"/ZZ4lAnalysis.root";
+  TString ntuple = "root://lxcms03//data3/Higgs/"+path+"/"+dataflag+"/ZZ4lAnalysis.root";
   cout << "Reading " << ntuple << "..." << endl;
   myfile = TFile::Open(ntuple);
 

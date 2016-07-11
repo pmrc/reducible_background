@@ -8,6 +8,7 @@
 #include <fstream>
 #include <iomanip>
 
+//Root Specifics
 #include <TFile.h>
 #include <TH1.h>
 #include <TGraph.h>
@@ -15,8 +16,15 @@
 #include <TBranch.h>
 #include <TCanvas.h>
 
-#include "ZZAnalysis/AnalysisStep/src/Category.cc"
+//RooFit Specifics
+#include "RooRealVar.h"
+#include "RooDataSet.h"
+#include "RooLandau.h"
+#include "RooPlot.h"
+#include "RooAddPdf.h"
 
+//Category interface
+#include "ZZAnalysis/AnalysisStep/src/Category.cc"
 #include "ZZAnalysis/AnalysisStep/interface/FinalStates.h"
 //#include "/home/llr/cms/ochando/CJLST/CMSSW_7416p1_ZX/src/ZZAnalysis/AnalysisStep/interface/bitops.h"
 
@@ -42,7 +50,7 @@ int findBin(double LepPt, double LepId) {
 }
 
 // ========================================================================================================================
-void redback(TString FS = "4e", TString dataset = "ALL", TString mode = "estimate", TString cat = "ALL", TString EXTRA="76X")
+void redback(TString FS = "4e", TString dataset = "ALL", TString mode = "estimate", TString cat = "ALL", TString EXTRA="80XA")
 // ========================================================================================================================
 {
   cout << "---> Working with Final State : " << FS << endl;
@@ -51,19 +59,40 @@ void redback(TString FS = "4e", TString dataset = "ALL", TString mode = "estimat
   cout << "---> Working with mode :        " << mode << endl;
   cout << "---> Working with Extra :       " << EXTRA << endl;
 
-  if( (FS!="4e") && (FS!="4mu")  && (FS!="2e2mu") &&  (FS!="2mu2e") )
+  float lumi = 0.0;
+  TString path = "";
+
+  if(EXTRA.Contains("76X")>0)
+	{ 
+	lumi = 2.6;
+	path = "160613_76X";
+	}
+
+  if(EXTRA.Contains("80XA")>0)
+	{ 
+	lumi = 2.6;
+	path = "160624";
+	}
+
+  if(EXTRA.Contains("80XB")>0)
+	{ 
+	lumi = 6.0;
+	path = "160624";
+	}
+
+
+  if (lumi == 0.0 or path == "")
+	{ cout << "Data taking era not valid!" << endl; return; }
+
+  if( (FS!="4e") && (FS!="4mu")  && (FS!="2e2mu") &&  (FS!="2mu2e") && (FS!="Z2e"))
     { cout << " ERROR ! FinalState should be 4e, 4mu, 2e2mu or 2mu2e" << endl; return; }
   
 
   if( (cat!="ALL") && (cat != "untagged") && (cat != "VBF-1j") && (cat != "ttH") && (cat != "VH-leptonic") && (cat != "VH-hadronic") && (cat != "VBF-2j"))
     { cout << " ERROR ! The category should be ALL, untagged, VBF-1j, ttH, VH-leptonic, VH-hadronic or VBF-2j" << endl; return; }
 
-
-  float lumi = 2.6; 
   cout << "---> Working with : " << lumi << " fb-1"  << endl;
-  
-  //gROOT->ProcessLine(".L /home/llr/cms/ochando/CJLST/CMSSW_7416p1_ZX/src/ZZAnalysis/AnalysisStep/interface/FinalStates.h");
-  //gROOT->ProcessLine(".L /home/llr/cms/ochando/CJLST/CMSSW_7416p1_ZX/src/ZZAnalysis/AnalysisStep/src/bitops.cc");
+ 
 
   // ------------------------------------------------
   // Dataset
@@ -90,9 +119,10 @@ void redback(TString FS = "4e", TString dataset = "ALL", TString mode = "estimat
   //cout << "---> Open Fake Rates " << endl;
   TString temp_FS = FS;
   if (FS == "4mu" or FS == "2e2mu") { temp_FS = "Zmu"; }
+  if (FS == "Z2e") { temp_FS = "Ze"; }
+  if (FS == "4e" or FS == "2mu2e") { temp_FS = "Z2e"; }
   TString file;
-  if(EXTRA.Contains("incl")>0) file = "histograms/computed_fakerate/4e/computedfakerate_incl.root"; 
-  else file = "histograms/computed_fakerate/"+temp_FS+"/computedfakerate_.root"; 
+  file = "histograms/computed_fakerate/"+temp_FS+"/computedfakerate_"+EXTRA+".root"; 
   cout << "Using fake rates : " << file << endl;
   TFile * f = TFile::Open(file);
   
@@ -110,31 +140,17 @@ void redback(TString FS = "4e", TString dataset = "ALL", TString mode = "estimat
   TString fakeEE_down = "";
   if (mode == "estimate" or temp_FS == "Zmu")
 	{
-  	fakeEB = "TG_Lep3_pT_all_EB_afterMET_ALL_76X";
-  	fakeEE = "TG_Lep3_pT_all_EE_afterMET_ALL_76X";
-  	if(EXTRA.Contains("incl")>0)
-		{ 
-      		fakeEB = "TG_Lep3_pT_all_EB_afterMET_ALL_76Xincl";
-      		fakeEE = "TG_Lep3_pT_all_EE_afterMET_ALL_76Xincl";
-    		}
+  	fakeEB = "TG_Lep3_pT_all_EB_afterMET_ALL_"+EXTRA;
+  	fakeEE = "TG_Lep3_pT_all_EE_afterMET_ALL_"+EXTRA;
 	}
   if (mode == "final" and temp_FS != "Zmu")
 	{
-  	fakeEB = "CorrFR_TG_Lep3_pT_all_EB_afterMET_ALL_76X";
-  	fakeEE = "CorrFR_TG_Lep3_pT_all_EE_afterMET_ALL_76X";
-  	fakeEB_up = "CorrFR_TG_Lep3_pT_all_EB_afterMET_ALL_76X_up";
-  	fakeEE_up = "CorrFR_TG_Lep3_pT_all_EE_afterMET_ALL_76X_up";
-  	fakeEB_down = "CorrFR_TG_Lep3_pT_all_EB_afterMET_ALL_76X_down";
-  	fakeEE_down = "CorrFR_TG_Lep3_pT_all_EE_afterMET_ALL_76X_down";
-  	if(EXTRA.Contains("incl")>0)
-		{ 
-      		fakeEB = "CorrFR_TG_Lep3_pT_all_EB_afterMET_ALL_76Xincl";
-      		fakeEE = "CorrFR_TG_Lep3_pT_all_EE_afterMET_ALL_76Xincl";
-      		fakeEB_up = "CorrFR_TG_Lep3_pT_all_EB_afterMET_ALL_76Xincl_up";
-      		fakeEE_up = "CorrFR_TG_Lep3_pT_all_EE_afterMET_ALL_76Xincl_up";
-      		fakeEB_down = "CorrFR_TG_Lep3_pT_all_EB_afterMET_ALL_76Xincl_down";
-      		fakeEE_down = "CorrFR_TG_Lep3_pT_all_EE_afterMET_ALL_76Xincl_down";
-    		}
+  	fakeEB = "CorrFR_TG_Lep3_pT_all_EB_afterMET_ALL_"+EXTRA;
+  	fakeEE = "CorrFR_TG_Lep3_pT_all_EE_afterMET_ALL_"+EXTRA;
+  	fakeEB_up = "CorrFR_TG_Lep3_pT_all_EB_afterMET_ALL_"+EXTRA+"_up";
+  	fakeEE_up = "CorrFR_TG_Lep3_pT_all_EE_afterMET_ALL_"+EXTRA+"_up";
+  	fakeEB_down = "CorrFR_TG_Lep3_pT_all_EB_afterMET_ALL_"+EXTRA+"_down";
+  	fakeEE_down = "CorrFR_TG_Lep3_pT_all_EE_afterMET_ALL_"+EXTRA+"_down";
 	}
 
 cout << "opening standard fake rates... " << fakeEB << "|" << fakeEE << endl;
@@ -185,7 +201,7 @@ if (mode == "final" and temp_FS != "Zmu")
 
   //myfile = new TFile("/data_CMS/cms/ochando/CJLSTReducedTree/151202/DoubleEG2015D/ZZ4lAnalysis.root");
   //myfile = new TFile("/data_CMS/cms/ochando/CJLSTReducedTree/160111_ggZZincomplete/"+dataflag+"/ZZ4lAnalysis.root");
-  TString ntuple = "root://lxcms03//data3/Higgs/160624/"+dataflag+"/ZZ4lAnalysis.root";
+  TString ntuple = "root://lxcms03//data3/Higgs/"+path+"/"+dataflag+"/ZZ4lAnalysis.root";
   cout << "Reading " << ntuple << "..." << endl;
   myfile = TFile::Open(ntuple);
 
@@ -390,6 +406,11 @@ if (mode == "final" and temp_FS != "Zmu")
   TH1F* h_Z1_Mass = new TH1F("Z1mass","Z1mass",200, 0, 200);
   TH1F* h_Z2_Mass = new TH1F("Z2mass","Z2mass",200, 0, 200);
   
+  //for the unbinned fit
+  RooRealVar mass("mass","M_{ZZ} GeV",90,1000);
+  RooRealVar w("weight","weigth",-1,1);
+  RooDataSet hZZmass("hZZmass","hZZmass",RooArgSet(mass));
+
   // --------------------------
   // Histos for pT, mhits
   // --------------------------
@@ -514,6 +535,7 @@ if (mode == "final" and temp_FS != "Zmu")
     if(FS=="4mu" && (Z1Flav==-169 && Z2Flav==+169)) { pass_flavor = true; OSSS = 1.22; }
     if(FS=="2mu2e" && (Z1Flav==-169 && Z2Flav==+121)) { pass_flavor = true; OSSS = 0.98;}
     if(FS=="2e2mu" && (Z1Flav==-121 && Z2Flav==+169)) { pass_flavor = true; OSSS = 1.3; }
+    if(FS=="Z2e" && Z2Flav==+121) { pass_flavor = true; OSSS = 0.98;}
       // 2e2m = -121 +169
       // 2mu2e = -169 +121
       // 4mu = -169 +169
@@ -624,7 +646,7 @@ if (mode == "final" and temp_FS != "Zmu")
     h_Z2_Mass->Fill(Z2Mass, WEIGHT);
 
     double eta_cut = 0;
-    if(FS=="4e" || FS=="2mu2e") eta_cut = 1.479; 
+    if(FS=="4e" or FS=="2mu2e" or FS=="Z2e") eta_cut = 1.479; 
     if(FS=="4mu" || FS=="2e2mu") eta_cut = 1.2; 
      
     // TH1F* h_Lep3_mhits[3][8];
@@ -747,6 +769,8 @@ if (mode == "final" and temp_FS != "Zmu")
 //if (mode == "final" and temp_FS != "Zmu") { cout << "end of estimation" << endl; }
 
     h_ZZ_MassW->Fill(ZZMass, temp_zx*WEIGHT);
+    mass.setVal(ZZMass);
+    hZZmass.add(RooArgSet(mass),temp_zx*WEIGHT);
 
     // ===========================================
     // Full cuts
@@ -765,19 +789,37 @@ if (mode == "final" and temp_FS != "Zmu")
      nselected++;
   } // END of the loop
 
+
+  //fitting
+  //RooRealVar constant("constant","landau constant",2.0,1.0,10.0);
+  RooRealVar mean("mean","landau mean",135.,100.,200.);
+  RooRealVar sigma("sigma","landau sigma",20.,10.,100.);
+  RooRealVar mean2("mean2","landau mean2",135.,100.,200.);
+  RooRealVar sigma2("sigma2","landau sigma2",20.,10.,100.);
+  
+  RooLandau signal("signal","signal PDF",mass,mean,sigma);
+  RooLandau landau2("landau2","landau2",mass,mean2,sigma2);
+
+  RooAddPdf sum("sum","landau+landau",RooArgList(signal,landau2)) ;
+
   double int_error = 0.0;
   h_ZZ_MassW->IntegralAndError(1,h_ZZ_MassW->GetNbinsX(),int_error);
 
   if (cat == "ALL" or cat == "untagged")
 	{
 	TCanvas * c1 = new TCanvas("c1", "c1", 800, 600);
-	TH1 *h_ZZ_MassW_rebin = h_ZZ_MassW->Rebin(10,"h_ZZ_MassW_rebin");
+        RooPlot* frame = mass.frame() ;
+	hZZmass.plotOn(frame);
+	hZZmass.statOn(frame);
 	//TF1 *fit; 
-	if (FS == "2mu2e" or FS == "4mu") { h_ZZ_MassW_rebin->Fit("landau","M","",90,400); }
-        if (FS == "4e" or FS == "2e2mu")
+	if (FS == "2mu2e" or FS == "4mu" or FS == "2e2mu") { signal.fitTo(hZZmass); }
+        if (FS == "4e" )
 		{
-		h_ZZ_MassW_rebin->Fit("landau","M","",90,400);
+		sum.fitTo(hZZmass);
 		}
+	signal.plotOn(frame);
+	signal.paramOn(frame);
+	frame->Draw();
 	c1->Print("PLOTS/png/"+ FS + "_fit_" + mode + "_" + cat +".png");
 	c1->Close();
 	}

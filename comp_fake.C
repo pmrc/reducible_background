@@ -400,7 +400,7 @@ void comp_FRMhits(std::vector<TString> vec_file_name, TString channel, std::vect
   //TH1F* h_mhits = (TH1F*)file->Get(mhitsname);
   cout << " ==============" << endl;
   cout << " pT " << mhitsname << endl;
-  cout << " mean = " << zLL_mhits->GetMean() << " error = " << zLL_mhits->GetMeanError() << endl;
+  cout << " Bin1 = << " << zLL_mhits->GetBinContent(1) << " mean = " << zLL_mhits->GetMean() << " error = " << zLL_mhits->GetMeanError() << endl;
   double corr_fake =  f1->Eval(zLL_mhits->GetMean());
   double corr_fakeErr = f1->Eval(zLL_mhits->GetMean() + zLL_mhits->GetMeanError());
   double dif = corr_fakeErr - corr_fake;
@@ -638,7 +638,7 @@ void draw_comp_corrFR(TFile* OutputFile, TString channel, TH1F *corr, TString na
 
   TGraph* h_fake = (TGraph*)OutputFile->Get(name_FR); /// vec_fakename_EBEE.at(j));
   h_fake->GetYaxis()->SetRangeUser(-0.05,0.3);
-  h_fake->GetXaxis()->SetTitle("Lepton pT"); 
+  h_fake->GetXaxis()->SetTitle("3^{rd} Lepton p_{T}"); 
   h_fake->Draw("AP");
 
 
@@ -664,7 +664,7 @@ void draw_comp_corrFR(TFile* OutputFile, TString channel, TH1F *corr, TString na
     if (TGcorrFR_up[i] < 0.0) { TGcorrFR_up[i] = 0.0; }
     TGcorrFR_down[i] = corr->GetBinContent(i+1) - corr->GetBinError(i+1);
     if (TGcorrFR_down[i] < 0.0) { TGcorrFR_down[i] = 0.0; }
-    //cout << "Corr = " << TGcorrFR[i] << " Up = " << TGcorrFR_up[i] << " Down = " << TGcorrFR_down[i] << endl;
+    cout << "Corr = " << TGcorrFR[i] << " Up = " << TGcorrFR_up[i] << " Down = " << TGcorrFR_down[i] << endl;
   } // for loop
 
     TGraph * CorrFR = new TGraphErrors(6, TGpTbins, TGcorrFR, TGpTbinsErr, TGcorrFRErr);
@@ -755,17 +755,76 @@ void draw_comp_inclcorrFR(TFile* OutputFile, TString channel, TH1F *corr, TStrin
   CorrFR->Write("CorrFR_"+TString(name_FR));
 
   TC_corrFR->Print("PLOTS/png/"+ channel + "_" + TString(TC_corrFR->GetName())+".png");
-  TC_corrFR->Print("PLOTS/pdf/"+ channel + "_" + TString(TC_corrFR->GetName())+".pdf");
-  
+TC_corrFR->Print("PLOTS/pdf/"+ channel + "_" + TString(TC_corrFR->GetName())+".pdf");
+
 }
 
 
+// ==============================================================
+void subtract_wz(TFile * OutputFile, TString channel, TH1 *fakerate_data, TH1 *data, TH1 *fakerate_wz, TH1 *wz, TH1 *fakerate, TString region)
+// ==============================================================
+	{
+	cout << "Subtract WZ " << endl;
+	double factor = wz->Integral()/data->Integral();
+
+	cout << "Factor = " << factor << endl;
+
+	//fakerate_wz->Scale(factor);
+
+	fakerate = (TH1*) fakerate_data->Clone("fakerate");
+
+
+	for (int i = 1; i <= fakerate->GetNbinsX();i++)
+		{
+		double val_data = data->GetBinContent(i);
+		double val_wz = wz->GetBinContent(i);
+		double factor_bin = val_wz/val_data;
+		double fr_data = fakerate_data->GetBinContent(i);
+		double fr_wz = fakerate_wz->GetBinContent(i);
+		double new_fr = fr_data - fr_wz * factor_bin;
+		cout << "Factor for bin " << i<< " = " << factor_bin << " orginal fake rate = " << fr_data << " corrected fake rate = " << new_fr << endl;
+		fakerate->SetBinContent(i,new_fr);
+		}
+
+	//fakerate->Add(fakerate_wz,-1);
+
+  	OutputFile->cd();
+  	fakerate->Write("CorrFR_"+region);
+
+
+  	TCanvas * TC_corrFR = new TCanvas("CORRFR_"+channel+"_"+region, "CORRFR_"+channel+"_"+region, 800, 600);
+  	gPad->SetGrid();
+
+	fakerate_data->SetMarkerColor(1);
+  	fakerate_data->SetLineColor(1);
+  	fakerate_data->Draw();
+	fakerate->SetMarkerColor(2);
+  	fakerate->SetLineColor(2);
+  	fakerate->Draw("same");
+
+  	TLegend *legend = new TLegend(0.1545226,0.6835664,0.3743719,0.8916084,NULL,"brNDC");
+  	legend->SetTextSize(0.03811252); //(0.035); 
+  	legend->SetTextFont(42);
+  	legend->SetLineColor(0);
+  	legend->SetLineStyle(1);
+  	legend->SetLineWidth(1);
+  	legend->SetFillColor(0);
+  	legend->SetFillStyle(0);
+  	legend->AddEntry(fakerate_data, "Uncorrected Fake Rate","lp");
+  	legend->AddEntry(fakerate, "Corrected Fake Rate","lp");
+  	legend->Draw();
+
+  	TC_corrFR->Print("PLOTS/png/" + channel + "_correction_"+region+".png");
+  	TC_corrFR->Print("PLOTS/pdf/" + channel + "_correction_"+region+".pdf");
+
+}
 
 // ==============================================================
-void comp_fake(TString channel = "Ze", TString mode = "rate", TString EXTRA = "")
+void comp_fake(TString channel = "Ze", TString mode = "rate", TString EXTRA = "80XA")
 // ==============================================================
 {
   
+ 
   //TString channel = "4mu";
   // gROOT->ProcessLine(".L macro_utils.C");
   
@@ -785,38 +844,26 @@ void comp_fake(TString channel = "Ze", TString mode = "rate", TString EXTRA = ""
 // ====================================================================================================================================================
   //     DEFINTIONS
   // ====================================================================================================================================================
-  // TString file_name1 = "out/output_";
-  // //
-  // TString file_name2 = "RESULTS/output_mc_ztozz_ztozzee.root";
-
 
   std::vector<TString> vec_file_name; vec_file_name.clear();
   //vec_file_name.push_back("out/outputCRZL_ALL_"+channel+"_76XMZ7.root");
-if (channel == "4e" or channel == "2mu2e")
+if (channel == "4e" or channel == "2mu2e" or channel == "Z2e")
 	{
-	vec_file_name.push_back("histograms/FR/Ze/FR_CRZL_ALL_76X"+EXTRA+".root");
+	vec_file_name.push_back("histograms/FR/Ze/FR_CRZL_ALL_"+EXTRA+".root");
 	}
 else
 	{
-	vec_file_name.push_back("histograms/FR/"+channel+"/FR_CRZL_ALL_76X"+EXTRA+".root");
+	vec_file_name.push_back("histograms/FR/"+channel+"/FR_CRZL_ALL_"+EXTRA+".root");
 	}
 
-  if(channel=="Ze" or channel == "4e" or channel == "2mu2e")
+  if(channel=="Ze" or channel == "4e" or channel == "2mu2e" or channel == "Z2e")
 	{
-    	//vec_file_name.push_back("out/outputCRZL_ALL_"+channel+"_76X.root");
-    	vec_file_name.push_back("histograms/FR/Ze/FR_CRZL_ALL_76XMZ7"+EXTRA+".root");
-    	vec_file_name.push_back("histograms/FR/Ze/FR_CRZL_ALL_76XMZ60"+EXTRA+".root");
-    	vec_file_name.push_back("histograms/FR/Ze/FR_CRZL_ALL_76XM3L5"+EXTRA+".root");
+    	//vec_file_name.push_back("out/outputCRZL_ALL_"+channel+"_"+era.root");
+    	vec_file_name.push_back("histograms/FR/Ze/FR_CRZL_ALL_"+EXTRA+"MZ7.root");
+    	vec_file_name.push_back("histograms/FR/Ze/FR_CRZL_ALL_"+EXTRA+"MZ60.root");
+    	vec_file_name.push_back("histograms/FR/Ze/FR_CRZL_ALL_"+EXTRA+"M3L5.root");
   	} // if 4e
 
-  if(channel=="Zmu" or channel == "4mu" or channel == "2e2mu")
-	{
-    	//vec_file_name.push_back("histograms/FR/Zmu/FR_CRZL_WZ_76X"+EXTRA+".root");
-    	//vec_file_name.push_back("histograms/FR/Zmu/FR_CRZL_DY50_76X"+EXTRA+".root");
-    	//vec_file_name.push_back("histograms/FR/Zmu/FR_CRZL_ZZ_76X"+EXTRA+".root");
-    	//vec_file_name.push_back("histograms/FR/Zmu/FR_CRZL_TT_76X"+EXTRA+".root");
-  	}
-    
 	TString output_name = "";
   	output_name = "histograms/computed_fakerate/"+channel+"/computedfakerate_"+EXTRA+".root";
   
@@ -877,8 +924,11 @@ else
   // --------------------------------------
     // Lepton FakeRate (DATA, 4e)
     // --------------------------------------
-   std::vector<TString> name_vecEB; std::vector<TString> name_vecEE; 
-   
+   std::vector<TString> name_vecEB;
+   std::vector<TString> name_vecEE;
+   std::vector<TString> name_vec;  
+ 
+
   //draw_comp_vechisto(vec_file_name, OutPutFile, "ems_pT_probe"+reg[ir],  "ems_pT_probe_CiCMedium"+reg[ir],rebin_pT, 0,80, PRINT, true, doturn, name_legend, "MC");
   for(unsigned int ifile=0;ifile<vec_file_name.size();ifile++) {
     TFile *file = TFile::Open(vec_file_name.at(ifile));
@@ -888,18 +938,23 @@ else
 
     reduced_name.ReplaceAll(".root", ""); 
     cout << "reduce = " << reduced_name << endl;
-    draw_comp_histo(file, channel, OutPutFile,"Lep3_pT_all_EB_afterMET",  "Lep3_pT_all_EB_afterIDISO", rebin_pT, 0,80, PRINT, false, false, 1, true, name_legend, reduced_name);
-    draw_comp_histo(file, channel, OutPutFile,"Lep3_pT_all_EE_afterMET",  "Lep3_pT_all_EE_afterIDISO", rebin_pT, 0,80, PRINT, false, false, 1, true, name_legend, reduced_name);
+    draw_comp_histo(file, channel, OutPutFile,"Lep3_pT_all_EB_afterMET_wzremoved",  "Lep3_pT_all_EB_afterIDISO_wzremoved", rebin_pT, 0,80, PRINT, false, false, 1, true, name_legend, reduced_name);
+    draw_comp_histo(file, channel, OutPutFile,"Lep3_pT_all_EE_afterMET_wzremoved",  "Lep3_pT_all_EE_afterIDISO_wzremoved", rebin_pT, 0,80, PRINT, false, false, 1, true, name_legend, reduced_name);
 
 
-    if(channel=="Ze" or channel == "4e" or channel == "2mu2e") {
-      name_vecEB.push_back("TG_Lep3_pT_all_EB_afterMET_"+reduced_name);
-      name_vecEE.push_back("TG_Lep3_pT_all_EE_afterMET_"+reduced_name);
+    if(channel=="Ze" or channel == "4e" or channel == "2mu2e" or channel == "Z2e") {
+      name_vecEB.push_back("TG_Lep3_pT_all_EB_afterMET_wzremoved_"+reduced_name);
+      name_vecEE.push_back("TG_Lep3_pT_all_EE_afterMET_wzremoved_"+reduced_name);
     } // if 4e
 
-    if(channel=="Zmu") { 
-      name_vecEB.push_back("TG_Lep3_pT_all_EB_afterMET_"+reduced_name);
-      name_vecEB.push_back("TG_Lep3_pT_all_EE_afterMET_"+reduced_name);
+    if(channel=="Zmu") {
+      if (ifile == 0)
+	{
+      	name_vec.push_back("TG_Lep3_pT_all_EB_afterMET_wzremoved_"+reduced_name);
+      	name_vec.push_back("TG_Lep3_pT_all_EE_afterMET_wzremoved_"+reduced_name);
+	}
+      name_vecEB.push_back("TG_Lep3_pT_all_EB_afterMET_wzremoved_"+reduced_name);
+      name_vecEE.push_back("TG_Lep3_pT_all_EE_afterMET_wzremoved_"+reduced_name);
     } // if 4mu
     //draw_comp_histo(TFile * file, TFile * OutputFile, TString name_histo_truth, TString name_histo_simu, int REBIN, double range_min, double range_max, 
     //bool print, bool norm, bool do_reweight, bool REBIN1, bool do_turnon, TString * name_legend, TString extra_name); 
@@ -907,7 +962,7 @@ else
   
   
 
-  if(channel=="Ze" or channel == "4e" or channel == "2mu2e") {
+  if(channel=="Ze" or channel == "4e" or channel == "2mu2e" or channel == "Z2e") {
     // -------------------------------------
     // Compare Lepton FakeRate (DATA, 4e)
     // --------------------------------------
@@ -929,7 +984,7 @@ else
     {
     //Lep3pT710, Lep3pT1020, Lep3pT2030, Lep3pT3040, Lep3pT4050,Lep3pT5080
     TString pTbins[6] = {"710", "1020", "2030", "3040", "4050", "5080"};
-    TString file_ZLL = "histograms/FR/"+ channel +"/FR_CRZLL_ALL_ALL_76X.root";
+    TString file_ZLL = "histograms/FR/"+ channel +"/FR_CRZLL_ALL_ALL_"+EXTRA+".root";
 
     if(EXTRA.Contains("incl")>0)
 	{
@@ -976,19 +1031,15 @@ else
   if(channel=="Zmu") {
     //void draw_comp_vecturnons(TFile * OutputFile, std::vector<TString> name_TG, int REBIN, double range_min, double range_max, 
     //bool print, TString * name_legend, TString extra_name)
-    name_legend[0] = "Data"; 
-    name_legend[1] = "WZ";
-    name_legend[2] = "DY50";
-    name_legend[3] = "ZZ";
-    name_legend[4] = "TT";
-
     name_legend[0] = "Barrel"; 
-    name_legend[1] = "Endcap"; 
-    
+    name_legend[1] = "Endcap";
+
+    draw_comp_vecturnons(OutPutFile, channel, name_vec, 1, 0, 80, PRINT, name_legend, "SS");
+
+    name_legend[0] = "Data"; 
+
     draw_comp_vecturnons(OutPutFile, channel, name_vecEB, 1, 0, 80, PRINT, name_legend, "SS");
-
-
-    //draw_comp_vecturnons(OutPutFile, channel, name_vecEE, 1, 0, 80, PRINT, name_legend, "SS");
+    draw_comp_vecturnons(OutPutFile, channel, name_vecEE, 1, 0, 80, PRINT, name_legend, "SS");
 
   } // if 4mu
  
