@@ -120,7 +120,8 @@ void redback(TString FS = "4e", TString dataset = "ALL", TString mode = "estimat
   TString temp_FS = FS;
   if (FS == "4mu" or FS == "2e2mu") { temp_FS = "Zmu"; }
   if (FS == "Z2e") { temp_FS = "Ze"; }
-  if (FS == "4e" or FS == "2mu2e") { temp_FS = "Z2e"; }
+  if ((FS == "4e" or FS == "2mu2e") and mode == "final") { temp_FS = "Z2e"; }
+  if ((FS == "4e" or FS == "2mu2e") and mode == "estimate") { temp_FS = "Ze"; }
   TString file;
   file = "histograms/computed_fakerate/"+temp_FS+"/computedfakerate_"+EXTRA+".root"; 
   cout << "Using fake rates : " << file << endl;
@@ -140,17 +141,17 @@ void redback(TString FS = "4e", TString dataset = "ALL", TString mode = "estimat
   TString fakeEE_down = "";
   if (mode == "estimate" or temp_FS == "Zmu")
 	{
-  	fakeEB = "TG_Lep3_pT_all_EB_afterMET_ALL_"+EXTRA;
-  	fakeEE = "TG_Lep3_pT_all_EE_afterMET_ALL_"+EXTRA;
+  	fakeEB = "TG_Lep3_pT_all_EB_afterMET_wzremoved_ALL_"+EXTRA;
+  	fakeEE = "TG_Lep3_pT_all_EE_afterMET_wzremoved_ALL_"+EXTRA;
 	}
   if (mode == "final" and temp_FS != "Zmu")
 	{
-  	fakeEB = "CorrFR_TG_Lep3_pT_all_EB_afterMET_ALL_"+EXTRA;
-  	fakeEE = "CorrFR_TG_Lep3_pT_all_EE_afterMET_ALL_"+EXTRA;
-  	fakeEB_up = "CorrFR_TG_Lep3_pT_all_EB_afterMET_ALL_"+EXTRA+"_up";
-  	fakeEE_up = "CorrFR_TG_Lep3_pT_all_EE_afterMET_ALL_"+EXTRA+"_up";
-  	fakeEB_down = "CorrFR_TG_Lep3_pT_all_EB_afterMET_ALL_"+EXTRA+"_down";
-  	fakeEE_down = "CorrFR_TG_Lep3_pT_all_EE_afterMET_ALL_"+EXTRA+"_down";
+  	fakeEB = "CorrFR_TG_Lep3_pT_all_EB_afterMET_wzremoved_ALL_"+EXTRA;
+  	fakeEE = "CorrFR_TG_Lep3_pT_all_EE_afterMET_wzremoved_ALL_"+EXTRA;
+  	fakeEB_up = "CorrFR_TG_Lep3_pT_all_EB_afterMET_wzremoved_ALL_"+EXTRA+"_up";
+  	fakeEE_up = "CorrFR_TG_Lep3_pT_all_EE_afterMET_wzremoved_ALL_"+EXTRA+"_up";
+  	fakeEB_down = "CorrFR_TG_Lep3_pT_all_EB_afterMET_wzremoved_ALL_"+EXTRA+"_down";
+  	fakeEE_down = "CorrFR_TG_Lep3_pT_all_EE_afterMET_wzremoved_ALL_"+EXTRA+"_down";
 	}
 
 cout << "opening standard fake rates... " << fakeEB << "|" << fakeEE << endl;
@@ -425,9 +426,10 @@ if (mode == "final" and temp_FS != "Zmu")
   TH1F* h_Lep3_mhits[3][8];
   TH1F* h_Lep4_mhits[3][8];
   TH1F* h_Lep34_mhits[3][8];
+
  
   for(int iloc=0;iloc<3;iloc++) {
-    h_Lep3_pT[iloc] = new TH1F("Lep3_pT_"+loc[iloc],  "Lep3_pT_"+loc[iloc]+";Lepon 3 pT;# events",7, xbins);    
+    h_Lep3_pT[iloc] = new TH1F("Lep3_pT_"+loc[iloc],  "Lep3_pT_"+loc[iloc]+";Lepon 3 pT;# events",7, xbins);
     h_Lep4_pT[iloc] = new TH1F("Lep4_pT_"+loc[iloc],  "Lep4_pT_"+loc[iloc]+";Lepon 4 pT;# events",7, xbins);    
     h_Lep34_pT[iloc] = new TH1F("Lep34_pT_"+loc[iloc],  "Lep34_pT_"+loc[iloc]+";Lepon 34 pT;# events",7, xbins);    
     h_Lep34_inclmhits[iloc] = new TH1F("Lep34_inclmhits_"+loc[iloc], "Lep34_inclmhits_"+loc[iloc], 5, 0, 5);
@@ -794,18 +796,18 @@ if (mode == "final" and temp_FS != "Zmu")
   //RooRealVar constant("constant","landau constant",2.0,1.0,10.0);
   RooRealVar mean("mean","landau mean",135.,100.,200.);
   RooRealVar sigma("sigma","landau sigma",20.,10.,100.);
-  RooRealVar mean2("mean2","landau mean2",135.,100.,200.);
-  RooRealVar sigma2("sigma2","landau sigma2",20.,10.,100.);
+  //RooRealVar mean2("mean2","landau mean2",135.,100.,200.);
+  //RooRealVar sigma2("sigma2","landau sigma2",20.,10.,100.);
   
   RooLandau signal("signal","signal PDF",mass,mean,sigma);
-  RooLandau landau2("landau2","landau2",mass,mean2,sigma2);
+  //RooLandau landau2("landau2","landau2",mass,mean2,sigma2);
 
-  RooAddPdf sum("sum","landau+landau",RooArgList(signal,landau2)) ;
+  //RooAddPdf sum("sum","landau+landau",RooArgList(signal,landau2)) ;
 
   double int_error = 0.0;
   h_ZZ_MassW->IntegralAndError(1,h_ZZ_MassW->GetNbinsX(),int_error);
 
-  if (cat == "ALL" or cat == "untagged")
+  if ((cat == "ALL" or cat == "untagged") and mode == "final")
 	{
 	TCanvas * c1 = new TCanvas("c1", "c1", 800, 600);
         RooPlot* frame = mass.frame() ;
@@ -815,12 +817,12 @@ if (mode == "final" and temp_FS != "Zmu")
 	if (FS == "2mu2e" or FS == "4mu" or FS == "2e2mu") { signal.fitTo(hZZmass); }
         if (FS == "4e" )
 		{
-		sum.fitTo(hZZmass);
+		signal.fitTo(hZZmass);
 		}
 	signal.plotOn(frame);
 	signal.paramOn(frame);
 	frame->Draw();
-	c1->Print("PLOTS/png/"+ FS + "_fit_" + mode + "_" + cat +".png");
+	c1->Print("PLOTS/png/"+ FS + "_fit_" + EXTRA + "_" + cat +".png");
 	c1->Close();
 	}
 
@@ -864,15 +866,11 @@ if (mode == "final" and temp_FS != "Zmu")
 	  h_Lep34_mhits[iloc][ipt]->Write();
 	}
   } // for loop in iloc
-
-  
-
-  
-
   
   OutputFile->Write();
-  OutputFile->Close();
-  
+  delete OutputFile;
+ 
+
   cout << "---> OutPut File: "  << outputfile_name << endl;
 
 }
