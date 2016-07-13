@@ -1,6 +1,6 @@
 //Created by Pedro Cipriano
 
-void loop_comp_fake(int mode = 1, TString era = "80XA")
+void loop_comp_fake(int mode = 1, TString era = "80XB")
 	{
 
 	if (mode == 1 or mode == 0)

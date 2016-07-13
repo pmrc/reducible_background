@@ -820,7 +820,7 @@ void subtract_wz(TFile * OutputFile, TString channel, TH1 *fakerate_data, TH1 *d
 }
 
 // ==============================================================
-void comp_fake(TString channel = "Ze", TString mode = "rate", TString EXTRA = "80XA")
+void comp_fake(TString channel = "Ze", TString mode = "rate", TString EXTRA = "80XB")
 // ==============================================================
 {
   
@@ -1034,7 +1034,7 @@ else
     name_legend[0] = "Barrel"; 
     name_legend[1] = "Endcap";
 
-    draw_comp_vecturnons(OutPutFile, channel, name_vec, 1, 0, 80, PRINT, name_legend, "SS");
+    draw_comp_vecturnons(OutPutFile, channel, name_vec, 1, 0, 80, PRINT, name_legend, EXTRA);
 
     name_legend[0] = "Data"; 
 
@@ -1050,8 +1050,8 @@ else
 
   if (mode == "correction")
 	{
-	plot_correction(corr_EB, corr_EB_up, corr_EB_down, channel, "barrel");
-	plot_correction(corr_EE, corr_EE_up, corr_EE_down, channel, "endcap");
+	plot_correction(corr_EB, corr_EB_up, corr_EB_down, channel, "barrel_"+EXTRA);
+	plot_correction(corr_EE, corr_EE_up, corr_EE_down, channel, "endcap_"+EXTRA);
 	plot_mhits(mhits_EB, mhits_EE, channel);
 	corr_EE->Write();
         corr_EB->Write();

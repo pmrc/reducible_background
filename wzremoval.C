@@ -58,7 +58,7 @@ void remove_wz(TString data, TString wz, TString channel, TFile *OutputFile, TSt
     	}
 
 
-void wzremoval(TString channel = "Ze", TString era = "80XA", TString EXTRA = "")
+void wzremoval(TString channel = "Ze", TString era = "80XB", TString EXTRA = "")
 {
 
 

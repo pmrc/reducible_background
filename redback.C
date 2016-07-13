@@ -50,7 +50,7 @@ int findBin(double LepPt, double LepId) {
 }
 
 // ========================================================================================================================
-void redback(TString FS = "4e", TString dataset = "ALL", TString mode = "estimate", TString cat = "ALL", TString EXTRA="80XA")
+void redback(TString FS = "4e", TString dataset = "ALL", TString mode = "estimate", TString cat = "ALL", TString EXTRA="80XB")
 // ========================================================================================================================
 {
   cout << "---> Working with Final State : " << FS << endl;
@@ -60,23 +60,27 @@ void redback(TString FS = "4e", TString dataset = "ALL", TString mode = "estimat
   cout << "---> Working with Extra :       " << EXTRA << endl;
 
   float lumi = 0.0;
+  TString path_data = "";
   TString path = "";
 
   if(EXTRA.Contains("76X")>0)
 	{ 
 	lumi = 2.6;
+	path_data = "160613_76X";
 	path = "160613_76X";
 	}
 
   if(EXTRA.Contains("80XA")>0)
 	{ 
 	lumi = 2.6;
+	path_data = "160624";
 	path = "160624";
 	}
 
   if(EXTRA.Contains("80XB")>0)
 	{ 
-	lumi = 6.0;
+	lumi = 5.76;
+	path_data = "160712";
 	path = "160624";
 	}
 
@@ -104,10 +108,10 @@ void redback(TString FS = "4e", TString dataset = "ALL", TString mode = "estimat
   else if( dataset=="TT" )   dataflag = "TTJets"; //"TTTo2L2nu";
   else if( dataset=="WZ" )  dataflag = "WZTo3LNu";
   else if( dataset=="ZZ" )   dataflag =  "ZZTo4l";
-  else if( dataset=="DEG")  { dataflag= "DoubleEGAll"; isMC=false; }
-  else if( dataset=="FEG")  { dataflag= "EGAll"; isMC=false; }
-  else if( dataset=="DMU") { dataflag= "DoubleMuAll"; isMC=false; }
-  else if( dataset=="ALL")   { dataflag= "AllData"; isMC=false; }
+  else if( dataset=="DEG")  { dataflag= "DoubleEGAll"; isMC=false; path = path_data; }
+  else if( dataset=="FEG")  { dataflag= "EGAll"; isMC=false; path = path_data; }
+  else if( dataset=="DMU") { dataflag= "DoubleMuAll"; isMC=false; path = path_data; }
+  else if( dataset=="ALL")   { dataflag= "AllData"; isMC=false; path = path_data; }
   else  { cout << " ERROR ! dataset should be DY50, TT, WZ, ZZ, DEG" << endl; return; }
   
   // ------------------------------------------------
@@ -221,7 +225,7 @@ if (mode == "final" and temp_FS != "Zmu")
   Short_t         Nvtx;
   Short_t         NObsInt;
   Float_t         NTrueInt;
-  Float_t         PUWeight;
+  //Float_t         PUWeight;
   Float_t         PFMET;
   Short_t         nCleanedJets;
   Short_t         nCleanedJetsPt30;
@@ -262,8 +266,8 @@ if (mode == "final" and temp_FS != "Zmu")
   Float_t         xsec;
   Float_t         pwh_hadronic_VAJHU;
   Float_t         phj_VAJHU;
-  Float_t         phjj_VAJHU_old;
-  Float_t         pvbf_VAJHU_old;
+  Float_t         phjj_VAJHU_old = 0; //temporary warning supression
+  Float_t         pvbf_VAJHU_old = 0; //temporary warning supression
   Float_t         pAux_vbf_VAJHU;
   Float_t         pzh_hadronic_VAJHU;
 
@@ -275,7 +279,7 @@ if (mode == "final" and temp_FS != "Zmu")
   TBranch        *b_Nvtx;   //!
   TBranch        *b_NObsInt;   //!
   TBranch        *b_NTrueInt;   //!
-  TBranch        *b_PUWeight;   //!
+  //TBranch        *b_PUWeight;   //!
   TBranch        *b_PFMET;   //!
   TBranch        *b_nCleanedJets;   //!
   TBranch        *b_nCleanedJetsPt30;   //!
@@ -317,8 +321,8 @@ if (mode == "final" and temp_FS != "Zmu")
   TBranch        *b_xsec;   //!
   TBranch        *b_pwh_hadronic_VAJHU; //categories
   TBranch        *b_phj_VAJHU;  //categories
-  TBranch        *b_phjj_VAJHU_old;  //categories
-  TBranch        *b_pvbf_VAJHU_old;  //categories
+  //TBranch        *b_phjj_VAJHU_old;  //categories
+  //TBranch        *b_pvbf_VAJHU_old;  //categories
   TBranch        *b_pAux_vbf_VAJHU;  //categories
   TBranch        *b_pzh_hadronic_VAJHU;  //categories
 
@@ -347,7 +351,7 @@ if (mode == "final" and temp_FS != "Zmu")
   mytree->SetBranchAddress("Nvtx", &Nvtx, &b_Nvtx);
   mytree->SetBranchAddress("NObsInt", &NObsInt, &b_NObsInt);
   mytree->SetBranchAddress("NTrueInt", &NTrueInt, &b_NTrueInt);
-  mytree->SetBranchAddress("PUWeight", &PUWeight, &b_PUWeight);
+  //mytree->SetBranchAddress("PUWeight", &PUWeight, &b_PUWeight);
   mytree->SetBranchAddress("PFMET", &PFMET, &b_PFMET);
   mytree->SetBranchAddress("nCleanedJets", &nCleanedJets, &b_nCleanedJets);
   mytree->SetBranchAddress("nCleanedJetsPt30", &nCleanedJetsPt30, &b_nCleanedJetsPt30);
@@ -385,11 +389,11 @@ if (mode == "final" and temp_FS != "Zmu")
   mytree->SetBranchAddress("JetQGLikelihood", &JetQGLikelihood, &b_JetQGLikelihood);
   mytree->SetBranchAddress("JetSigma", &JetSigma, &b_JetSigma);
   mytree->SetBranchAddress("overallEventWeight", &overallEventWeight, &b_overallEventWeight);
-  mytree->SetBranchAddress("xsec", &xsec, &b_xsec);
+  if (isMC) { mytree->SetBranchAddress("xsec", &xsec, &b_xsec); }
   mytree->SetBranchAddress("pwh_hadronic_VAJHU", &pwh_hadronic_VAJHU, &b_pwh_hadronic_VAJHU);
   mytree->SetBranchAddress("phj_VAJHU", &phj_VAJHU, &b_phj_VAJHU);
-  mytree->SetBranchAddress("phjj_VAJHU_old", &phjj_VAJHU_old, &b_phjj_VAJHU_old);
-  mytree->SetBranchAddress("pvbf_VAJHU_old", &pvbf_VAJHU_old, &b_pvbf_VAJHU_old);
+  //mytree->SetBranchAddress("phjj_VAJHU_old", &phjj_VAJHU_old, &b_phjj_VAJHU_old);
+  //mytree->SetBranchAddress("pvbf_VAJHU_old", &pvbf_VAJHU_old, &b_pvbf_VAJHU_old);
   mytree->SetBranchAddress("pAux_vbf_VAJHU", &pAux_vbf_VAJHU, &b_pAux_vbf_VAJHU);
   mytree->SetBranchAddress("pzh_hadronic_VAJHU", &pzh_hadronic_VAJHU, &b_pzh_hadronic_VAJHU);
 
@@ -513,11 +517,11 @@ if (mode == "final" and temp_FS != "Zmu")
     int index = 0;
 
 
-	if (!isMC)
-	{
-	if (RunNumber > 274443) { continue; }
-	else { cutdes[icut] = "Runs between 271036-274443 "; ICUT->Fill((Float_t)icut,WEIGHT); icut++; }
-	}
+	//if (!isMC)
+	//{
+	//if (RunNumber > 274443) { continue; }
+	//else { cutdes[icut] = "Runs between 271036-274443 "; ICUT->Fill((Float_t)icut,WEIGHT); icut++; }
+	//}
 
     //if ( _debug ) {cout<<"-------> Beginning preselection cuts"<<endl;}
     cutdes[icut] = "No cut"; ICUT->Fill((Float_t)icut,WEIGHT); icut++; 
@@ -567,7 +571,14 @@ if (mode == "final" and temp_FS != "Zmu")
 
     int cate = -1;
     //cout << "here - " <<  cate << endl;
-    cate = categoryIchep16(nExtraLep, nExtraZ, nCleanedJetsPt30, nCleanedJetsPt30BTagged, jetQGL, phjj_VAJHU_old, phj_VAJHU, pvbf_VAJHU_old, pAux_vbf_VAJHU, pwh_hadronic_VAJHU, pzh_hadronic_VAJHU);
+    if(EXTRA.Contains("80XB")>0) //at the moment is not safe to use categories
+	{
+	cate = categoryIchep16(nExtraLep, nExtraZ, nCleanedJetsPt30, nCleanedJetsPt30BTagged, jetQGL, phjj_VAJHU_old, phj_VAJHU, pvbf_VAJHU_old, pAux_vbf_VAJHU, pwh_hadronic_VAJHU, pzh_hadronic_VAJHU);
+	}
+    else
+	{
+	cate = 0;
+	}
 
 
     bool passcat = false;
@@ -870,6 +881,20 @@ if (mode == "final" and temp_FS != "Zmu")
   OutputFile->Write();
   delete OutputFile;
  
+  for(int iloc=0;iloc<3;iloc++)
+	{
+
+    	delete h_Lep3_pT[iloc];
+    	delete h_Lep4_pT[iloc];
+    	delete h_Lep34_pT[iloc];
+    	delete h_Lep34_inclmhits[iloc];
+	for(int ipt=0;ipt<7;ipt++)
+		{
+		delete h_Lep3_mhits[iloc][ipt];
+		delete h_Lep4_mhits[iloc][ipt];
+		delete h_Lep34_mhits[iloc][ipt];
+		}
+	}
 
   cout << "---> OutPut File: "  << outputfile_name << endl;
 

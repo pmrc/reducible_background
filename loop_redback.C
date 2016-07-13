@@ -1,22 +1,22 @@
 //Created by Pedro Cipriano
 
-void loop_redback(int mode = 1, TString era = "80XA")
+void loop_redback(int mode = 1, TString era = "80XB")
 	{
 
 	int nmodes = 2;
 	TString modes[2] = {"estimate", "final"};
 	int nfstates = 4;
 	TString fstates[5] = {"4e", "2mu2e", "4mu", "2e2mu","Z2e"};
-	int ncategories = 2;
+	int ncategories = 1;
 	TString categories[7] = {"ALL", "untagged", "VBF-1j", "VBF-2j", "VH-leptonic", "VH-hadronic", "ttH"};
 	int nsamples = 1;
 	TString samples[5] = {"ALL", "DY50", "TT", "WZ", "ZZ"};
 
 
-	//standard fake loop for all samples and final states
+	//standard redback loop for all samples and final states
 	if (mode == 2)
 		{
-		for (int i=1;i<nfstates;i++)
+		for (int i=0;i<nfstates;i++)
 			{
 			for (int j=0;j<nsamples;j++)
 				{
