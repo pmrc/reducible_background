@@ -7,7 +7,7 @@ void loop_redback(int mode = 1, TString era = "80XB")
 	TString modes[2] = {"estimate", "final"};
 	int nfstates = 4;
 	TString fstates[5] = {"4e", "2mu2e", "4mu", "2e2mu","Z2e"};
-	int ncategories = 1;
+	int ncategories = 7;
 	TString categories[7] = {"ALL", "untagged", "VBF-1j", "VBF-2j", "VH-leptonic", "VH-hadronic", "ttH"};
 	int nsamples = 1;
 	TString samples[5] = {"ALL", "DY50", "TT", "WZ", "ZZ"};

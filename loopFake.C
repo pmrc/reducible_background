@@ -56,7 +56,7 @@ void loopFake(TString FS = "Ze", TString dataset = "ALL", TString branch = "CRZL
 
   if(EXTRA.Contains("80XB")>0)
 	{ 
-	lumi = 5.76;
+	lumi = 6.26;
 	path_data = "160712";
 	path = "160624";
 	}

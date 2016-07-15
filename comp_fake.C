@@ -17,16 +17,16 @@
 #include "macro_utils.C"
 
 
-// ==================================================================================================================================
+// =====================================================================================================
 void draw_comp_histo(TFile * file, TString channel, TFile * OutputFile, TString name_histo_truth, TString name_histo_simu, int REBIN, double range_min, double range_max, 
 		     bool print, bool norm, bool do_reweight, bool REBIN1, bool do_turnon, TString * name_legend, TString extra_name) //, TGraphAsymmErrors * TG_turn)
-// ==================================================================================================================================
+// =====================================================================================================
 {
   
   //gStyle->SetOptStat(0000);
   
-  TH1F* histo_truth;
-  TH1F* histo_simu;
+  TH1F* histo_truth = 0;
+  TH1F* histo_simu = 0;
   
   cout << "Draw Comp Histo -----------------> Histo for : " << name_histo_truth << "     and " << name_histo_simu << " extra = " << extra_name << endl; //Xhisto_pass << endl;
   
@@ -37,7 +37,9 @@ void draw_comp_histo(TFile * file, TString channel, TFile * OutputFile, TString 
   cout << "-----------------> Histo for : " << reduced_name << endl; 
 
   histo_truth = (TH1F*)file->Get(name_histo_truth); //"JET_PT_1");
+  if (histo_truth == 0) { cout << name_histo_truth << " not found!" << endl; return;  }
   histo_simu  = (TH1F*)file->Get(name_histo_simu); 
+  if (histo_simu == 0) { cout << name_histo_simu << " not found!" << endl; return;  }
   
   TCanvas * TC_histo = new TCanvas("TC_"+name_histo_simu+"_"+extra_name,"TC_"+name_histo_simu+"_"+extra_name,800,600);
   drawCMS();
@@ -319,10 +321,10 @@ void draw_comp_histo(TFile * file, TString channel, TFile * OutputFile, TString 
 
 
 
-// ==================================================================================================================================
+// =====================================================================================================
 void comp_FRMhits(std::vector<TString> vec_file_name, TString channel, std::vector<TString> vec_fakename_EBEE, TH1F *corr, TH1F *corr_up, TH1F *corr_down, TH1F *hmhits_plot, TFile* OutputFile, TString mhitsname, TString file_ZLL, TString mhitsnameZLL)
 //(vec_file_name, name_vecEB, OutPutFile, "Lep3_mhits_EE_pT1020");
-// ==================================================================================================================================
+// =====================================================================================================
 {
 
   TCanvas * TC_FRvsMhits = new TCanvas("FRvsMhits_"+mhitsname, "FRvsMhits_"+mhitsname, 800, 600);
@@ -442,9 +444,9 @@ void comp_FRMhits(std::vector<TString> vec_file_name, TString channel, std::vect
 
 
 
-// ==================================================================================================================================
+// =====================================================================================================
 void plot_correction(TH1F *corr, TH1F *corr_up, TH1F *corr_down, TString channel, TString flag)
-// ==================================================================================================================================
+// =====================================================================================================
 {
 
   TCanvas * canvas = new TCanvas("corr","corr",800,600);
@@ -479,9 +481,9 @@ void plot_correction(TH1F *corr, TH1F *corr_up, TH1F *corr_down, TString channel
 }
 
 
-// ==================================================================================================================================
+// ==========================================================================================
 void plot_mhits(TH1F *mhits_EB, TH1F *mhits_EE, TString channel)
-// ==================================================================================================================================
+// ==========================================================================================
 {
 
   TCanvas * canvas = new TCanvas("mhits",",hits",800,600);
@@ -512,10 +514,10 @@ void plot_mhits(TH1F *mhits_EB, TH1F *mhits_EE, TString channel)
 
 
 
-// ==================================================================================================================================
+// ===================================================================================================
 void draw_comp_vecturnons(TFile * OutputFile, TString channel, std::vector<TString> name_TG, int REBIN, double range_min, double range_max, 
 			  bool print, TString * name_legend, TString extra_name)
-// ==================================================================================================================================
+// ===================================================================================================
 {
   //TGraphAsymmErrors * TG_turnon1;
   //TGraphAsymmErrors * TG_turnon2;
@@ -629,9 +631,9 @@ void draw_comp_vecturnons(TFile * OutputFile, TString channel, std::vector<TStri
 }
 
 
-// ==================================================================================================================================
+// =====================================================================================================
 void draw_comp_corrFR(TFile* OutputFile, TString channel, TH1F *corr, TString name_FR)
-// ==================================================================================================================================
+// =====================================================================================================
 {
   TCanvas * TC_corrFR = new TCanvas("CORRFR_"+name_FR, "CORRFR_"+name_FR, 800, 600);
   gPad->SetGrid();
@@ -704,9 +706,9 @@ void draw_comp_corrFR(TFile* OutputFile, TString channel, TH1F *corr, TString na
 
 
 
-//==================================================================================================================================
+//======================================================================================================
 void draw_comp_inclcorrFR(TFile* OutputFile, TString channel, TH1F *corr, TString name_FR)
-// ==================================================================================================================================
+// =====================================================================================================
 {
   TCanvas * TC_corrFR = new TCanvas("inclCORRFR_"+name_FR, "inclCORRFR_"+name_FR, 800, 600);
   gPad->SetGrid();
@@ -819,31 +821,150 @@ void subtract_wz(TFile * OutputFile, TString channel, TH1 *fakerate_data, TH1 *d
 
 }
 
+
+
+
+void remove_wz(TString data, TString wz, TString channel, TFile *OutputFile, TString swz, TString EXTRA)
+    	{
+
+    	TH1D *hdata = 0;
+    	hdata = (TH1D*) OutputFile->Get(data);
+    	if (hdata == 0) { cout<< data << " in " << OutputFile << " not found!" <<endl; return; }
+    	TFile *fwz = TFile::Open(swz);
+    	TH1D *hwz = (TH1D*) fwz->Get(wz);
+    	if (hwz == 0) { cout<< wz << " in " << swz << " not found!" <<endl; return; }
+
+    	TH1 *wzremoved = (TH1*) hdata->Clone(data+"_wzremoved");
+
+        //cout << wzremoved->GetName() << endl;
+    	wzremoved->Add(hwz,-1);
+
+    	OutputFile->cd();
+    	wzremoved->Write();
+
+
+	TCanvas * TC_corrFR = new TCanvas("CORRFR_"+channel+"_"+data+EXTRA, "CORRFR_"+channel+"_"+data+EXTRA, 800, 600);
+  	gPad->SetGrid();
+
+	hdata->SetMarkerColor(1);
+  	hdata->SetLineColor(1);
+  	hdata->Draw();
+	wzremoved->SetMarkerColor(2);
+  	wzremoved->SetLineColor(2);
+  	wzremoved->Draw("same");
+
+  	TLegend *legend = new TLegend(0.30,0.6835664,0.60,0.8916084,NULL,"brNDC");
+  	legend->SetTextSize(0.03811252); //(0.035); 
+  	legend->SetTextFont(42);
+  	legend->SetLineColor(0);
+  	legend->SetLineStyle(1);
+  	legend->SetLineWidth(1);
+  	legend->SetFillColor(0);
+  	legend->SetFillStyle(0);
+  	legend->AddEntry(hdata, "Uncorrected Fake Rate","lp");
+  	legend->AddEntry(wzremoved, "Corrected Fake Rate","lp");
+  	legend->Draw();
+
+  	TC_corrFR->Print("PLOTS/png/" + channel + "_wzremoval_"+data+"_"+EXTRA+".png");
+  	TC_corrFR->Print("PLOTS/pdf/" + channel + "_wzremoval_"+data+"_"+EXTRA+".pdf");
+
+
+    	}
+
+
+
 // ==============================================================
 void comp_fake(TString channel = "Ze", TString mode = "rate", TString EXTRA = "80XB")
 // ==============================================================
 {
-  
+//==================================================================================================
+//     DEFINTIONS
+// =================================================================================================
+
+if (mode == "rate" and (channel == "Ze" or channel == "Zmu"))
+{
+
+
+TString fdata = "histograms/FR/"+channel+"/FR_CRZL_ALL_"+EXTRA+".root";
+TString fwz = "histograms/FR/"+channel+"/FR_CRZL_WZ_"+EXTRA+".root";
+
+cout << "Opening " << fdata << "..." << endl;
+
+TFile *Output = new TFile(fdata,"UPDATE"); 
+
+remove_wz("Lep3_pT_all_EB_afterMET", "Lep3_pT_all_EB_afterMET", channel, Output, fwz, EXTRA);
+remove_wz("Lep3_pT_all_EE_afterMET", "Lep3_pT_all_EE_afterMET", channel, Output, fwz, EXTRA);
+remove_wz("Lep3_pT_all_EB_afterIDISO", "Lep3_pT_all_EB_afterIDISO", channel, Output, fwz, EXTRA);
+remove_wz("Lep3_pT_all_EE_afterIDISO", "Lep3_pT_all_EE_afterIDISO", channel, Output, fwz, EXTRA);
+
+Output->Close();
+
+if (channel == "Ze")
+{
+
+fdata = "histograms/FR/"+channel+"/FR_CRZL_ALL_"+EXTRA+"MZ10.root";
+fwz = "histograms/FR/"+channel+"/FR_CRZL_WZ_"+EXTRA+"MZ10.root";
+
+cout << "Opening " << fdata << "..." << endl;
+
+Output = new TFile(fdata,"UPDATE"); 
+
+remove_wz("Lep3_pT_all_EB_afterMET", "Lep3_pT_all_EB_afterMET", channel, Output, fwz, EXTRA+"MZ10");
+remove_wz("Lep3_pT_all_EE_afterMET", "Lep3_pT_all_EE_afterMET", channel, Output, fwz, EXTRA+"MZ10");
+remove_wz("Lep3_pT_all_EB_afterIDISO", "Lep3_pT_all_EB_afterIDISO", channel, Output, fwz, EXTRA+"MZ10");
+remove_wz("Lep3_pT_all_EE_afterIDISO", "Lep3_pT_all_EE_afterIDISO", channel, Output, fwz, EXTRA+"MZ10");
+
+Output->Close();
+
+fdata = "histograms/FR/"+channel+"/FR_CRZL_ALL_"+EXTRA+"MZ7.root";
+fwz = "histograms/FR/"+channel+"/FR_CRZL_WZ_"+EXTRA+"MZ7.root";
+
+cout << "Opening " << fdata << "..." << endl;
+
+Output = new TFile(fdata,"UPDATE"); 
+
+remove_wz("Lep3_pT_all_EB_afterMET", "Lep3_pT_all_EB_afterMET", channel, Output, fwz, EXTRA+"MZ7");
+remove_wz("Lep3_pT_all_EE_afterMET", "Lep3_pT_all_EE_afterMET", channel, Output, fwz, EXTRA+"MZ7");
+remove_wz("Lep3_pT_all_EB_afterIDISO", "Lep3_pT_all_EB_afterIDISO", channel, Output, fwz, EXTRA+"MZ7");
+remove_wz("Lep3_pT_all_EE_afterIDISO", "Lep3_pT_all_EE_afterIDISO", channel, Output, fwz, EXTRA+"MZ7");
+
+Output->Close();
+
+
+fdata = "histograms/FR/"+channel+"/FR_CRZL_ALL_"+EXTRA+"MZ60.root";
+fwz = "histograms/FR/"+channel+"/FR_CRZL_WZ_"+EXTRA+"MZ60.root";
+
+cout << "Opening " << fdata << "..." << endl;
+
+Output = new TFile(fdata,"UPDATE"); 
+
+remove_wz("Lep3_pT_all_EB_afterMET", "Lep3_pT_all_EB_afterMET", channel, Output, fwz, EXTRA+"MZ60");
+remove_wz("Lep3_pT_all_EE_afterMET", "Lep3_pT_all_EE_afterMET", channel, Output, fwz, EXTRA+"MZ60");
+remove_wz("Lep3_pT_all_EB_afterIDISO", "Lep3_pT_all_EB_afterIDISO", channel, Output, fwz, EXTRA+"MZ60");
+remove_wz("Lep3_pT_all_EE_afterIDISO", "Lep3_pT_all_EE_afterIDISO", channel, Output, fwz, EXTRA+"MZ60");
+
+Output->Close();
+
+
+fdata = "histograms/FR/"+channel+"/FR_CRZL_ALL_"+EXTRA+"M3L5.root";
+fwz = "histograms/FR/"+channel+"/FR_CRZL_WZ_"+EXTRA+"M3L5.root";
+
+cout << "Opening " << fdata << "..." << endl;
+
+Output = new TFile(fdata,"UPDATE"); 
+
+remove_wz("Lep3_pT_all_EB_afterMET", "Lep3_pT_all_EB_afterMET", channel, Output, fwz, EXTRA+"M3L5");
+remove_wz("Lep3_pT_all_EE_afterMET", "Lep3_pT_all_EE_afterMET", channel, Output, fwz, EXTRA+"M3L5");
+remove_wz("Lep3_pT_all_EB_afterIDISO", "Lep3_pT_all_EB_afterIDISO", channel, Output, fwz, EXTRA+"M3L5");
+remove_wz("Lep3_pT_all_EE_afterIDISO", "Lep3_pT_all_EE_afterIDISO", channel, Output, fwz, EXTRA+"M3L5");
+
+Output->Close();
+
+}
  
-  //TString channel = "4mu";
-  // gROOT->ProcessLine(".L macro_utils.C");
-  
+}
 
-  //init_style(gStyle);
-  //gROOT->SetBatch();
-  //gROOT->Reset();
-  //gROOT->SetStyle("Plain");
 
-  //setTDRStyle_rob();
-
-  //loadPresentationStyle();
-  //gStyle->SetOptStat(0);
-  //gStyle->SetPalette(51);
-  //  gROOT->ForceStyle();
-  
-// ====================================================================================================================================================
-  //     DEFINTIONS
-  // ====================================================================================================================================================
 
   std::vector<TString> vec_file_name; vec_file_name.clear();
   //vec_file_name.push_back("out/outputCRZL_ALL_"+channel+"_76XMZ7.root");
@@ -882,9 +1003,9 @@ else
 
   //float pi = acos(-1);
 
-  // ====================================================================================================================================================
+  // ===================================================================================================
   //     MODE: ONE INPUT FILE : ALONE HISTO
-  // ====================================================================================================================================================
+  // ===================================================================================================
   TString * name_legend = new TString[10];
   name_legend[0] = "Probe electrons"; //pthat>5"; //"with UE";
   name_legend[1] = "Passing Probe electrons"; //pthat>10"; //w/o UE";
@@ -937,7 +1058,7 @@ else
     reduced_name.ReplaceAll("histograms/FR/Ze/FR_CRZL_", "");
 
     reduced_name.ReplaceAll(".root", ""); 
-    cout << "reduce = " << reduced_name << endl;
+    cout << "file name = " << vec_file_name.at(ifile) << " reduced name = " << reduced_name << endl;
     draw_comp_histo(file, channel, OutPutFile,"Lep3_pT_all_EB_afterMET_wzremoved",  "Lep3_pT_all_EB_afterIDISO_wzremoved", rebin_pT, 0,80, PRINT, false, false, 1, true, name_legend, reduced_name);
     draw_comp_histo(file, channel, OutPutFile,"Lep3_pT_all_EE_afterMET_wzremoved",  "Lep3_pT_all_EE_afterIDISO_wzremoved", rebin_pT, 0,80, PRINT, false, false, 1, true, name_legend, reduced_name);
 

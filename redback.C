@@ -79,7 +79,7 @@ void redback(TString FS = "4e", TString dataset = "ALL", TString mode = "estimat
 
   if(EXTRA.Contains("80XB")>0)
 	{ 
-	lumi = 5.76;
+	lumi = 6.26;
 	path_data = "160712";
 	path = "160624";
 	}
@@ -158,7 +158,7 @@ void redback(TString FS = "4e", TString dataset = "ALL", TString mode = "estimat
   	fakeEE_down = "CorrFR_TG_Lep3_pT_all_EE_afterMET_wzremoved_ALL_"+EXTRA+"_down";
 	}
 
-cout << "opening standard fake rates... " << fakeEB << "|" << fakeEE << endl;
+//cout << "opening standard fake rates... " << fakeEB << "|" << fakeEE << endl;
 
    TGraph* h1D_FRel_EB = 0;
    f->GetObject(fakeEB,h1D_FRel_EB);
@@ -175,7 +175,7 @@ cout << "opening standard fake rates... " << fakeEB << "|" << fakeEE << endl;
   double *fake_EB_down = 0;
   double *fake_EE_down = 0;
 
-cout << "fake rates 2" << endl;
+//cout << "fake rates 2" << endl;
 
 if (mode == "final" and temp_FS != "Zmu")
 	{
@@ -266,8 +266,8 @@ if (mode == "final" and temp_FS != "Zmu")
   Float_t         xsec;
   Float_t         pwh_hadronic_VAJHU;
   Float_t         phj_VAJHU;
-  Float_t         phjj_VAJHU_old = 0; //temporary warning supression
-  Float_t         pvbf_VAJHU_old = 0; //temporary warning supression
+  Float_t         phjj_VAJHU_highestPTJets;
+  Float_t         pvbf_VAJHU_highestPTJets;
   Float_t         pAux_vbf_VAJHU;
   Float_t         pzh_hadronic_VAJHU;
 
@@ -321,8 +321,8 @@ if (mode == "final" and temp_FS != "Zmu")
   TBranch        *b_xsec;   //!
   TBranch        *b_pwh_hadronic_VAJHU; //categories
   TBranch        *b_phj_VAJHU;  //categories
-  //TBranch        *b_phjj_VAJHU_old;  //categories
-  //TBranch        *b_pvbf_VAJHU_old;  //categories
+  TBranch        *b_phjj_VAJHU_highestPTJets;  //categories
+  TBranch        *b_pvbf_VAJHU_highestPTJets;  //categories
   TBranch        *b_pAux_vbf_VAJHU;  //categories
   TBranch        *b_pzh_hadronic_VAJHU;  //categories
 
@@ -392,8 +392,8 @@ if (mode == "final" and temp_FS != "Zmu")
   if (isMC) { mytree->SetBranchAddress("xsec", &xsec, &b_xsec); }
   mytree->SetBranchAddress("pwh_hadronic_VAJHU", &pwh_hadronic_VAJHU, &b_pwh_hadronic_VAJHU);
   mytree->SetBranchAddress("phj_VAJHU", &phj_VAJHU, &b_phj_VAJHU);
-  //mytree->SetBranchAddress("phjj_VAJHU_old", &phjj_VAJHU_old, &b_phjj_VAJHU_old);
-  //mytree->SetBranchAddress("pvbf_VAJHU_old", &pvbf_VAJHU_old, &b_pvbf_VAJHU_old);
+  mytree->SetBranchAddress("phjj_VAJHU_highestPTJets", &phjj_VAJHU_highestPTJets, &b_phjj_VAJHU_highestPTJets);
+  mytree->SetBranchAddress("pvbf_VAJHU_highestPTJets", &pvbf_VAJHU_highestPTJets, &b_pvbf_VAJHU_highestPTJets);
   mytree->SetBranchAddress("pAux_vbf_VAJHU", &pAux_vbf_VAJHU, &b_pAux_vbf_VAJHU);
   mytree->SetBranchAddress("pzh_hadronic_VAJHU", &pzh_hadronic_VAJHU, &b_pzh_hadronic_VAJHU);
 
@@ -571,14 +571,8 @@ if (mode == "final" and temp_FS != "Zmu")
 
     int cate = -1;
     //cout << "here - " <<  cate << endl;
-    if(EXTRA.Contains("80XB")>0) //at the moment is not safe to use categories
-	{
-	cate = categoryIchep16(nExtraLep, nExtraZ, nCleanedJetsPt30, nCleanedJetsPt30BTagged, jetQGL, phjj_VAJHU_old, phj_VAJHU, pvbf_VAJHU_old, pAux_vbf_VAJHU, pwh_hadronic_VAJHU, pzh_hadronic_VAJHU);
-	}
-    else
-	{
-	cate = 0;
-	}
+    cate = categoryIchep16(nExtraLep, nExtraZ, nCleanedJetsPt30, nCleanedJetsPt30BTagged, jetQGL, phjj_VAJHU_highestPTJets, phj_VAJHU, pvbf_VAJHU_highestPTJets, pAux_vbf_VAJHU, pwh_hadronic_VAJHU, pzh_hadronic_VAJHU);
+
 
 
     bool passcat = false;
@@ -783,7 +777,8 @@ if (mode == "final" and temp_FS != "Zmu")
 
     h_ZZ_MassW->Fill(ZZMass, temp_zx*WEIGHT);
     mass.setVal(ZZMass);
-    hZZmass.add(RooArgSet(mass),temp_zx*WEIGHT);
+    Double_t wt = temp_zx*WEIGHT;
+    hZZmass.add(RooArgSet(mass),wt);
 
     // ===========================================
     // Full cuts
@@ -818,7 +813,7 @@ if (mode == "final" and temp_FS != "Zmu")
   double int_error = 0.0;
   h_ZZ_MassW->IntegralAndError(1,h_ZZ_MassW->GetNbinsX(),int_error);
 
-  if ((cat == "ALL" or cat == "untagged") and mode == "final")
+  if ((cat == "ALL" or cat == "untagged" or cat == "VBF-1j") and mode == "final")
 	{
 	TCanvas * c1 = new TCanvas("c1", "c1", 800, 600);
         RooPlot* frame = mass.frame() ;
