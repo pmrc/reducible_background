@@ -19,6 +19,7 @@
 //RooFit Specifics
 #include "RooRealVar.h"
 #include "RooDataSet.h"
+#include "RooArgList.h"
 #include "RooLandau.h"
 #include "RooPlot.h"
 #include "RooAddPdf.h"
@@ -79,8 +80,8 @@ void redback(TString FS = "4e", TString dataset = "ALL", TString mode = "estimat
 
   if(EXTRA.Contains("80XB")>0)
 	{ 
-	lumi = 6.26;
-	path_data = "160712";
+	lumi = 7.65;
+	path_data = "160716";
 	path = "160624";
 	}
 
@@ -143,7 +144,17 @@ void redback(TString FS = "4e", TString dataset = "ALL", TString mode = "estimat
   TString fakeEE_up = "";
   TString fakeEB_down = "";
   TString fakeEE_down = "";
-  if (mode == "estimate" or temp_FS == "Zmu")
+
+  if (temp_FS == "Zmu")
+	{
+  	fakeEB = "TG_Lep3_pT_all_EB_afterMET_wzremoved_ALL_"+EXTRA;
+  	fakeEE = "TG_Lep3_pT_all_EE_afterMET_wzremoved_ALL_"+EXTRA;
+  	fakeEB_up = "Corr_up_Lep3_pT_all_EB_afterMET_wzremoved";
+  	fakeEE_up = "Corr_up_Lep3_pT_all_EE_afterMET_wzremoved";
+  	fakeEB_down = "Corr_down_Lep3_pT_all_EB_afterMET_wzremoved";
+  	fakeEE_down = "Corr_down_Lep3_pT_all_EE_afterMET_wzremoved";
+	}
+  if (mode == "estimate" and temp_FS != "Zmu")
 	{
   	fakeEB = "TG_Lep3_pT_all_EB_afterMET_wzremoved_ALL_"+EXTRA;
   	fakeEE = "TG_Lep3_pT_all_EE_afterMET_wzremoved_ALL_"+EXTRA;
@@ -177,18 +188,25 @@ void redback(TString FS = "4e", TString dataset = "ALL", TString mode = "estimat
 
 //cout << "fake rates 2" << endl;
 
-if (mode == "final" and temp_FS != "Zmu")
+if (mode == "final" or temp_FS == "Zmu")
 	{
 	//cout << "opening extra graphs..." << endl;
 	TGraph* h1D_FRel_EB_up = (TGraph*)f->Get(fakeEB_up);
+	if (h1D_FRel_EB_up == 0) { cout<< fakeEB_up << " in " << file << " not found!" <<endl; return; }
   	TGraph* h1D_FRel_EE_up = (TGraph*)f->Get(fakeEE_up);
-  	//cout << "Tgraphs Up : " << fakeEB_up << " " << fakeEE_up << endl;
+  	cout << "Tgraphs Up : " << fakeEB_up << " " << fakeEE_up << endl;
+	if (h1D_FRel_EE_up == 0) { cout<< fakeEE_up << " in " << file << " not found!" <<endl; return; }
   	fake_EB_up = h1D_FRel_EB_up->GetY();
   	fake_EE_up = h1D_FRel_EE_up->GetY();
 
+	//cout << "test" << endl;
+	//cout << "fake_eb_up = " << fake_EB_up[0] << endl;
+
   	TGraph* h1D_FRel_EB_down = (TGraph*)f->Get(fakeEB_down);
+	if (h1D_FRel_EB_down == 0) { cout<< fakeEB_down << " in " << file << " not found!" <<endl; return; }
   	TGraph* h1D_FRel_EE_down = (TGraph*)f->Get(fakeEE_down);
-  	//cout << "Tgraphs Down : " << fakeEB_down << " " << fakeEE_down << endl;
+	if (h1D_FRel_EE_down == 0) { cout<< fakeEE_down << " in " << file << " not found!" <<endl; return; }
+  	cout << "Tgraphs Down : " << fakeEB_down << " " << fakeEE_down << endl;
   	fake_EB_down = h1D_FRel_EB_down->GetY();
   	fake_EE_down = h1D_FRel_EE_down->GetY();
 	}
@@ -392,8 +410,10 @@ if (mode == "final" and temp_FS != "Zmu")
   if (isMC) { mytree->SetBranchAddress("xsec", &xsec, &b_xsec); }
   mytree->SetBranchAddress("pwh_hadronic_VAJHU", &pwh_hadronic_VAJHU, &b_pwh_hadronic_VAJHU);
   mytree->SetBranchAddress("phj_VAJHU", &phj_VAJHU, &b_phj_VAJHU);
-  mytree->SetBranchAddress("phjj_VAJHU_highestPTJets", &phjj_VAJHU_highestPTJets, &b_phjj_VAJHU_highestPTJets);
-  mytree->SetBranchAddress("pvbf_VAJHU_highestPTJets", &pvbf_VAJHU_highestPTJets, &b_pvbf_VAJHU_highestPTJets);
+  if (EXTRA.Contains("80XB")>0) { mytree->SetBranchAddress("phjj_VAJHU_highestPTJets", &phjj_VAJHU_highestPTJets, &b_phjj_VAJHU_highestPTJets); }
+  if (EXTRA.Contains("80XB")>0) { mytree->SetBranchAddress("pvbf_VAJHU_highestPTJets", &pvbf_VAJHU_highestPTJets, &b_pvbf_VAJHU_highestPTJets); }
+  if (EXTRA.Contains("80XA")>0 or EXTRA.Contains("76X")>0) { mytree->SetBranchAddress("phjj_VAJHU_old", &phjj_VAJHU_highestPTJets, &b_phjj_VAJHU_highestPTJets); }
+  if (EXTRA.Contains("80XA")>0 or EXTRA.Contains("76X")>0) { mytree->SetBranchAddress("pvbf_VAJHU_old", &pvbf_VAJHU_highestPTJets, &b_pvbf_VAJHU_highestPTJets); }
   mytree->SetBranchAddress("pAux_vbf_VAJHU", &pAux_vbf_VAJHU, &b_pAux_vbf_VAJHU);
   mytree->SetBranchAddress("pzh_hadronic_VAJHU", &pzh_hadronic_VAJHU, &b_pzh_hadronic_VAJHU);
 
@@ -412,9 +432,10 @@ if (mode == "final" and temp_FS != "Zmu")
   TH1F* h_Z2_Mass = new TH1F("Z2mass","Z2mass",200, 0, 200);
   
   //for the unbinned fit
-  RooRealVar mass("mass","M_{ZZ} GeV",90,1000);
-  RooRealVar w("weight","weigth",-1,1);
-  RooDataSet hZZmass("hZZmass","hZZmass",RooArgSet(mass));
+  RooRealVar mass("mass","M_{ZZ} GeV",100,1000);
+  RooRealVar w("weight","weigth",-1,10);
+  //RooDataSet hZZmass_full("hZZmass","hZZmass",RooArgSet(mass,w));
+  RooDataSet hZZmass("hZZmass","hZZmass",RooArgSet(mass,w),w.GetName());
 
   // --------------------------
   // Histos for pT, mhits
@@ -568,10 +589,24 @@ if (mode == "final" and temp_FS != "Zmu")
 	jetQGL[j] = JetQGLikelihood->at(j);
 	}
 
+    Float_t jet_phi[nCleanedJetsPt30];
+
 
     int cate = -1;
     //cout << "here - " <<  cate << endl;
-    cate = categoryIchep16(nExtraLep, nExtraZ, nCleanedJetsPt30, nCleanedJetsPt30BTagged, jetQGL, phjj_VAJHU_highestPTJets, phj_VAJHU, pvbf_VAJHU_highestPTJets, pAux_vbf_VAJHU, pwh_hadronic_VAJHU, pzh_hadronic_VAJHU);
+    if (EXTRA.Contains("76X")>0 or EXTRA.Contains("80XA")>0)
+	{    
+	//cate = categoryIchep16(nExtraLep, nExtraZ, nCleanedJetsPt30, nCleanedJetsPt30BTagged, jetQGL, phjj_VAJHU_highestPTJets, phj_VAJHU, pvbf_VAJHU_highestPTJets, pAux_vbf_VAJHU, pwh_hadronic_VAJHU, pzh_hadronic_VAJHU); //need to be uncommented
+	}
+    if (EXTRA.Contains("80XB")>0)
+	{
+    	for(int j=0; j<nCleanedJetsPt30; j++)
+		{
+		//cout << "j = " << j << endl;
+		jet_phi[j] = JetPhi->at(j);
+		}
+	cate = categoryIchep16(nExtraLep, nExtraZ, nCleanedJetsPt30, nCleanedJetsPt30BTagged, jetQGL, phjj_VAJHU_highestPTJets, phj_VAJHU, pvbf_VAJHU_highestPTJets, pAux_vbf_VAJHU, pwh_hadronic_VAJHU, pzh_hadronic_VAJHU, jet_phi, ZZMass);
+	}
 
 
 
@@ -730,7 +765,7 @@ if (mode == "final" and temp_FS != "Zmu")
       if(fabs(LepEta->at(2+i)) < eta_cut)
 	{
 	fakes[i] = fake_EB[bin];
-	if (mode == "final" and temp_FS != "Zmu")
+	if (mode == "final" or temp_FS == "Zmu")
 		{
 		//cout << "problem in EB..." << endl;
 		fakes_up[i] = fake_EB_up[bin];
@@ -740,7 +775,7 @@ if (mode == "final" and temp_FS != "Zmu")
       else
 	{
 	fakes[i] = fake_EE[bin];
-	if (mode == "final" and temp_FS != "Zmu")
+	if (mode == "final" or temp_FS == "Zmu")
 		{
 		//cout << "problem in EE..." << endl;
 		fakes_up[i] = fake_EE_up[bin];
@@ -757,7 +792,7 @@ if (mode == "final" and temp_FS != "Zmu")
     double temp_zx = OSSS * fakes[0]*fakes[1];
     double temp_zx_up = 0.0, temp_zx_down = 0.0;
 
-	if (mode == "final" and temp_FS != "Zmu")
+	if (mode == "final" or temp_FS == "Zmu")
 	{
     	temp_zx_up = OSSS * fakes_up[0]*fakes_up[1];
     	temp_zx_down = OSSS * fakes_down[0]*fakes_down[1];
@@ -767,7 +802,7 @@ if (mode == "final" and temp_FS != "Zmu")
 	}
     
     expected_zx += temp_zx;
-	if (mode == "final" and temp_FS != "Zmu")
+	if (mode == "final" or temp_FS == "Zmu")
 	{
     	expected_zx_up += temp_zx_up;
     	expected_zx_down += temp_zx_down;
@@ -778,7 +813,7 @@ if (mode == "final" and temp_FS != "Zmu")
     h_ZZ_MassW->Fill(ZZMass, temp_zx*WEIGHT);
     mass.setVal(ZZMass);
     Double_t wt = temp_zx*WEIGHT;
-    hZZmass.add(RooArgSet(mass),wt);
+    hZZmass.add(RooArgSet(mass),wt,0);
 
     // ===========================================
     // Full cuts
@@ -813,6 +848,11 @@ if (mode == "final" and temp_FS != "Zmu")
   double int_error = 0.0;
   h_ZZ_MassW->IntegralAndError(1,h_ZZ_MassW->GetNbinsX(),int_error);
 
+  //RooDataSet hZZmass = new RooDataSet("m4l", "m4l", m4l_full, m4l_full->get(), weight.GetName());  
+  //RooDataSet hZZmass_fit(hZZmass.GetName(),hZZmass.GetTitle(),RooArgSet(mass),0,w.GetName()) ;
+  hZZmass.Print();
+  hZZmass.printTree(std::cout);
+
   if ((cat == "ALL" or cat == "untagged" or cat == "VBF-1j") and mode == "final")
 	{
 	TCanvas * c1 = new TCanvas("c1", "c1", 800, 600);
@@ -820,10 +860,10 @@ if (mode == "final" and temp_FS != "Zmu")
 	hZZmass.plotOn(frame);
 	hZZmass.statOn(frame);
 	//TF1 *fit; 
-	if (FS == "2mu2e" or FS == "4mu" or FS == "2e2mu") { signal.fitTo(hZZmass); }
+	if (FS == "2mu2e" or FS == "4mu" or FS == "2e2mu") { signal.fitTo(hZZmass,RooFit::SumW2Error(kTRUE)); }
         if (FS == "4e" )
 		{
-		signal.fitTo(hZZmass);
+		signal.fitTo(hZZmass,RooFit::SumW2Error(kTRUE));
 		}
 	signal.plotOn(frame);
 	signal.paramOn(frame);
@@ -843,7 +883,7 @@ if (mode == "final" and temp_FS != "Zmu")
   cout << "Total Number of events selected = "  << nselected                       << endl;
   cout << "Total Number of Reducible Background = "  << expected_zx                   << endl;
   cout << "Integral Error = " << int_error << " (" << 100*int_error/expected_zx << "%)" << endl;
-if (mode == "final" and temp_FS != "Zmu")
+if (mode == "final" or temp_FS == "Zmu")
 	{
   	cout << "Total Number of Reducible Background Up = "  << expected_zx_up                << endl;
   	cout << "Total Number of Reducible Background Down = "  << expected_zx_down            << endl;

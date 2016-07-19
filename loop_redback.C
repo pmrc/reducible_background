@@ -16,7 +16,7 @@ void loop_redback(int mode = 1, TString era = "80XB")
 	//standard redback loop for all samples and final states
 	if (mode == 2)
 		{
-		for (int i=0;i<nfstates;i++)
+		for (int i=2;i<nfstates;i++)
 			{
 			for (int j=0;j<nsamples;j++)
 				{

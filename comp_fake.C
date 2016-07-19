@@ -21,79 +21,73 @@
 void draw_comp_histo(TFile * file, TString channel, TFile * OutputFile, TString name_histo_truth, TString name_histo_simu, int REBIN, double range_min, double range_max, 
 		     bool print, bool norm, bool do_reweight, bool REBIN1, bool do_turnon, TString * name_legend, TString extra_name) //, TGraphAsymmErrors * TG_turn)
 // =====================================================================================================
-{
-  
-  //gStyle->SetOptStat(0000);
-  
-  TH1F* histo_truth = 0;
-  TH1F* histo_simu = 0;
-  
-  cout << "Draw Comp Histo -----------------> Histo for : " << name_histo_truth << "     and " << name_histo_simu << " extra = " << extra_name << endl; //Xhisto_pass << endl;
-  
-  TString reduced_name = name_histo_truth; //TString
-  //reduced_name.Remove("0","/");
-  reduced_name.ReplaceAll("/", ""); //name_histo, "/","");
-  //name_histo.Remove("/");
-  cout << "-----------------> Histo for : " << reduced_name << endl; 
-
-  histo_truth = (TH1F*)file->Get(name_histo_truth); //"JET_PT_1");
-  if (histo_truth == 0) { cout << name_histo_truth << " not found!" << endl; return;  }
-  histo_simu  = (TH1F*)file->Get(name_histo_simu); 
-  if (histo_simu == 0) { cout << name_histo_simu << " not found!" << endl; return;  }
-  
-  TCanvas * TC_histo = new TCanvas("TC_"+name_histo_simu+"_"+extra_name,"TC_"+name_histo_simu+"_"+extra_name,800,600);
-  drawCMS();
-  
-  // ----------------
-  //  Create Legend
-  // ----------------
-  //   TLegend* legend = new TLegend(0.70,0.7,0.99,0.99);
-  //   legend->SetTextSize(0.02); 
-  TLegend* legend;
-  if      (name_histo_truth.Contains("fbrem")) legend = new TLegend(0.6155779,0.1643357,0.8442211,0.4020979,NULL,"brNDC");
-  else if (name_histo_truth.Contains("sigma") || name_histo_truth.Contains("N_em") )  legend = new TLegend(0.620603,0.6381119,0.8492462,0.8758741,NULL,"brNDC");
-  else if (name_histo_truth.Contains("he")    || name_histo_truth.Contains("iso"))    legend = new TLegend(0.620603,0.6381119,0.8492462,0.8758741,NULL,"brNDC");
-  else if (name_histo_truth.Contains("Sig"))  legend = new TLegend(0.4, 0.168, 0.63, 0.4, NULL,"brNDC");
-  //else if (name_histo_truth.Contains("MVA"))  legend = new TLegend(0.3994975,0.7604895,0.6256281,0.9685315,NULL,"brNDC"); //legend = new TLegend(0.4, 0.968, 0.93, 0.6, NULL,"brNDC");
-  else if (name_histo_truth.Contains("MVA"))  legend = new TLegend(0.4535176,0.7185315,0.6796482,0.9265734,NULL,"brNDC");
-  //&& name_histo_truth.Contains("EE")) 
-  //else legend = new TLegend(0.1520101,0.6346154,0.3806533,0.8723776,NULL,"brNDC");
-  else legend = new TLegend(0.7236181,0.7587413,0.9434673,0.9667832,NULL,"brNDC");
-
-  //(0.6545226,0.1171329,0.8831658,0.3548951);
-  //legend->SetTextSize(0.02); 
-  legend->SetTextFont(42);
-  legend->SetTextSize(0.03496503);
-  legend->SetFillColor(kWhite);
-  legend->SetBorderSize(0);
-  
-  //TH_DATA->GetYaxis()->SetTitle(TString(tmp_string)+" "+TString(unit));
-
-  if(REBIN1) histo_truth->Rebin(REBIN);
-  histo_truth->SetFillColor(kBlue); //kRed); //9);
-  histo_truth->SetFillStyle(3005); //3003);
-  histo_truth->SetLineColor(kBlue); //kRed);
-  histo_truth->SetLineWidth(3);
-  histo_truth->GetXaxis()->SetRangeUser(range_min,range_max);
-  legend->AddEntry(histo_truth, name_legend[0],"lf");
+	{
  
-  histo_simu->Rebin(REBIN);
-  //histo_simu->SetMarkerStyle(21);
-  histo_simu->SetFillColor(kRed); //kBlue); //2);
-  histo_simu->SetFillStyle(0); //3003);
-  histo_simu->SetLineWidth(3);
-  histo_simu->SetLineStyle(2);
-  histo_simu->SetLineColor(kRed); //kBlue);
-  //histo_simu->SetLineColor(1); //2);
-  //histo_simu->SetMarkerColor(1);//2);
-  //histo_simu->SetMarkerStyle(20);
-  legend->AddEntry(histo_simu,name_legend[1],"l");
+  	//Declaring histograms
+  	TH1F* histo_truth = 0;
+  	TH1F* histo_simu = 0;
   
-  // 
-  int NB_bins1 = histo_truth->GetNbinsX();
+	//output the input  	
+	cout << "Draw Comp Histo -----------------> Histo for : " << name_histo_truth << "     and " << name_histo_simu << " extra = " << extra_name << endl; //Xhisto_pass << endl;
   
-  double NB_truth = histo_truth->Integral(0,NB_bins1+1);
-  double NB_simu  = histo_simu->Integral(0,NB_bins1+1);
+	//Reducing the name
+  	TString reduced_name = name_histo_truth; //TString
+  	//reduced_name.Remove("0","/");
+  	reduced_name.ReplaceAll("/", ""); //name_histo, "/","");
+  	//name_histo.Remove("/");
+  	cout << "-----------------> Histo for : " << reduced_name << endl; 
+
+	//Getting the source histograms
+  	histo_truth = (TH1F*)file->Get(name_histo_truth); //"JET_PT_1");
+  	if (histo_truth == 0) { cout << name_histo_truth << " not found!" << endl; return;  }
+  	histo_simu  = (TH1F*)file->Get(name_histo_simu); 
+  	if (histo_simu == 0) { cout << name_histo_simu << " not found!" << endl; return;  }
+  
+	//creating the Canvas  
+	TCanvas * TC_histo = new TCanvas("TC_"+name_histo_simu+"_"+extra_name,"TC_"+name_histo_simu+"_"+extra_name,800,600);
+  	drawCMS();
+  
+	//Creating the Legend
+  	TLegend* legend;
+  	if      (name_histo_truth.Contains("fbrem")) legend = new TLegend(0.6155779,0.1643357,0.8442211,0.4020979,NULL,"brNDC");
+  	else if (name_histo_truth.Contains("sigma") || name_histo_truth.Contains("N_em") )  legend = new TLegend(0.620603,0.6381119,0.8492462,0.8758741,NULL,"brNDC");
+  	else if (name_histo_truth.Contains("he")    || name_histo_truth.Contains("iso"))    legend = new TLegend(0.620603,0.6381119,0.8492462,0.8758741,NULL,"brNDC");
+  	else if (name_histo_truth.Contains("Sig"))  legend = new TLegend(0.4, 0.168, 0.63, 0.4, NULL,"brNDC");
+  	//else if (name_histo_truth.Contains("MVA"))  legend = new TLegend(0.3994975,0.7604895,0.6256281,0.9685315,NULL,"brNDC"); //legend = new TLegend(0.4, 0.968, 0.93, 0.6, NULL,"brNDC");
+  	else if (name_histo_truth.Contains("MVA"))  legend = new TLegend(0.4535176,0.7185315,0.6796482,0.9265734,NULL,"brNDC");
+  	//&& name_histo_truth.Contains("EE")) 
+  	//else legend = new TLegend(0.1520101,0.6346154,0.3806533,0.8723776,NULL,"brNDC");
+  	else legend = new TLegend(0.7236181,0.7587413,0.9434673,0.9667832,NULL,"brNDC");
+  	//legend->SetTextSize(0.02); 
+  	legend->SetTextFont(42);
+  	legend->SetTextSize(0.03496503);
+  	legend->SetFillColor(kWhite);
+  	legend->SetBorderSize(0);
+  
+
+	//Rebinning and formating the truth histogram
+  	if(REBIN1) histo_truth->Rebin(REBIN);
+  	histo_truth->SetFillColor(kBlue); //kRed); //9);
+  	histo_truth->SetFillStyle(3005); //3003);
+  	histo_truth->SetLineColor(kBlue); //kRed);
+  	histo_truth->SetLineWidth(3);
+  	histo_truth->GetXaxis()->SetRangeUser(range_min,range_max);
+  	legend->AddEntry(histo_truth, name_legend[0],"lf");
+ 
+	//Rebinning and formating the simu histogram
+  	histo_simu->Rebin(REBIN);
+  	histo_simu->SetFillColor(kRed); //kBlue); //2);
+  	histo_simu->SetFillStyle(0); //3003);
+  	histo_simu->SetLineWidth(3);
+  	histo_simu->SetLineStyle(2);
+  	histo_simu->SetLineColor(kRed); //kBlue);
+  	legend->AddEntry(histo_simu,name_legend[1],"l");
+  
+  	//Geting the Number of bins
+  	int NB_bins1 = histo_truth->GetNbinsX();
+  
+  	double NB_truth = histo_truth->Integral(0,NB_bins1+1);
+  	double NB_simu  = histo_simu->Integral(0,NB_bins1+1);
   
   string unit = "GeV";
   if(name_histo_truth.Contains("Delta_phi"))  unit = "rad";
@@ -250,13 +244,35 @@ void draw_comp_histo(TFile * file, TString channel, TFile * OutputFile, TString 
       //TC_histo_divide->Print("PLOTS/Divide_"+name_histo_simu+".eps");
     }
 
-    
-
 
     // -----------------------
     // Write the plots
     // -----------------------
     OutputFile->cd();
+	if (channel == "Zmu")
+		{
+		Int_t n = 6;
+		TGraph *corr_up;
+		TGraph *corr_down;
+
+		Double_t y_up[n], y_down[n];
+		Double_t *x = TG_turn_temp->GetX();
+		Double_t *temp = TG_turn_temp->GetY();
+		for (int i = 1; i <= n; i++)
+			{
+			Float_t val = temp[i-1];
+			y_up[i-1] = val + TG_turn_temp->GetErrorYhigh(i);
+			y_down[i-1] = val - TG_turn_temp->GetErrorYlow(i);
+			cout << "val = " << val << " up = " << y_up[i] << " down = " << y_down[i] << endl;
+			}
+
+		corr_up = new TGraph(n,x,y_up);
+		corr_down = new TGraph(n,x,y_down);
+		corr_up->Write("Corr_up_"+reduced_name);
+		corr_down->Write("Corr_down_"+reduced_name);
+		}
+
+
     TG_turn_temp->Write("TG_"+reduced_name+"_"+extra_name);
     histo_simu->Write("Divide_"+reduced_name+"_"+extra_name);
     TC_histo_turnon->Write("Turnon_"+reduced_name+"_"+extra_name);
@@ -762,67 +778,6 @@ TC_corrFR->Print("PLOTS/pdf/"+ channel + "_" + TString(TC_corrFR->GetName())+".p
 }
 
 
-// ==============================================================
-void subtract_wz(TFile * OutputFile, TString channel, TH1 *fakerate_data, TH1 *data, TH1 *fakerate_wz, TH1 *wz, TH1 *fakerate, TString region)
-// ==============================================================
-	{
-	cout << "Subtract WZ " << endl;
-	double factor = wz->Integral()/data->Integral();
-
-	cout << "Factor = " << factor << endl;
-
-	//fakerate_wz->Scale(factor);
-
-	fakerate = (TH1*) fakerate_data->Clone("fakerate");
-
-
-	for (int i = 1; i <= fakerate->GetNbinsX();i++)
-		{
-		double val_data = data->GetBinContent(i);
-		double val_wz = wz->GetBinContent(i);
-		double factor_bin = val_wz/val_data;
-		double fr_data = fakerate_data->GetBinContent(i);
-		double fr_wz = fakerate_wz->GetBinContent(i);
-		double new_fr = fr_data - fr_wz * factor_bin;
-		cout << "Factor for bin " << i<< " = " << factor_bin << " orginal fake rate = " << fr_data << " corrected fake rate = " << new_fr << endl;
-		fakerate->SetBinContent(i,new_fr);
-		}
-
-	//fakerate->Add(fakerate_wz,-1);
-
-  	OutputFile->cd();
-  	fakerate->Write("CorrFR_"+region);
-
-
-  	TCanvas * TC_corrFR = new TCanvas("CORRFR_"+channel+"_"+region, "CORRFR_"+channel+"_"+region, 800, 600);
-  	gPad->SetGrid();
-
-	fakerate_data->SetMarkerColor(1);
-  	fakerate_data->SetLineColor(1);
-  	fakerate_data->Draw();
-	fakerate->SetMarkerColor(2);
-  	fakerate->SetLineColor(2);
-  	fakerate->Draw("same");
-
-  	TLegend *legend = new TLegend(0.1545226,0.6835664,0.3743719,0.8916084,NULL,"brNDC");
-  	legend->SetTextSize(0.03811252); //(0.035); 
-  	legend->SetTextFont(42);
-  	legend->SetLineColor(0);
-  	legend->SetLineStyle(1);
-  	legend->SetLineWidth(1);
-  	legend->SetFillColor(0);
-  	legend->SetFillStyle(0);
-  	legend->AddEntry(fakerate_data, "Uncorrected Fake Rate","lp");
-  	legend->AddEntry(fakerate, "Corrected Fake Rate","lp");
-  	legend->Draw();
-
-  	TC_corrFR->Print("PLOTS/png/" + channel + "_correction_"+region+".png");
-  	TC_corrFR->Print("PLOTS/pdf/" + channel + "_correction_"+region+".pdf");
-
-}
-
-
-
 
 void remove_wz(TString data, TString wz, TString channel, TFile *OutputFile, TString swz, TString EXTRA)
     	{
@@ -1140,6 +1095,10 @@ else
       	draw_comp_corrFR(OutPutFile, channel, corr_EE, name_vecEE.at(0));
     	} // else pT 
   
+
+
+
+
     } //correction 
   } // if channel = 4e/Z2e/2mu2e
 
@@ -1175,7 +1134,7 @@ else
 	plot_correction(corr_EE, corr_EE_up, corr_EE_down, channel, "endcap_"+EXTRA);
 	plot_mhits(mhits_EB, mhits_EE, channel);
 	corr_EE->Write();
-        corr_EB->Write();
+	corr_EB->Write();
 	corr_EE_up->Write();
         corr_EB_up->Write();
 	corr_EE_down->Write();
