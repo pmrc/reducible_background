@@ -18,6 +18,46 @@
 
 
 // =====================================================================================================
+void plot_correction(TH1F *corr, TH1F *corr_up, TH1F *corr_down, TString channel, TString flag)
+// =====================================================================================================
+{
+
+  TCanvas * canvas = new TCanvas("corr","corr",800,600);
+
+  TLegend *legend = new TLegend(0.1545226,0.6835664,0.3743719,0.8916084,NULL,"");
+  legend->SetTextSize(0.03811252); //(0.035); 
+  legend->SetTextFont(42);
+  legend->SetLineColor(0);
+  legend->SetLineStyle(1);
+  legend->SetLineWidth(1);
+  legend->SetFillColor(0);
+  legend->SetFillStyle(0);
+
+    corr->GetYaxis()->SetRangeUser(0.0,0.5);
+    corr->GetYaxis()->SetTitle("Fake Rate"); //Electron ID Efficiency");
+    corr->GetXaxis()->SetTitle("3^{rd} Lepton p_{T}"); //Electron ID Efficiency");
+    corr->Draw();
+    corr_up->SetLineColor(2);
+    corr_up->SetLineStyle(1);
+    corr_up->Draw("hsame");
+    corr_down->SetLineColor(3);
+    corr_down->SetLineStyle(1);
+    corr_down->Draw("hsame");
+
+
+    legend->AddEntry(corr, "Correction","lp");
+    legend->AddEntry(corr_up, "Upper Estimation","lp");
+    legend->AddEntry(corr_down, "Lower Estimation","lp");
+    legend->Draw();
+
+
+  canvas->Print("PLOTS/png/"+ channel + "_fake_rate_correction_" + flag + ".png");
+
+}
+
+
+
+// =====================================================================================================
 void draw_comp_histo(TFile * file, TString channel, TFile * OutputFile, TString name_histo_truth, TString name_histo_simu, int REBIN, double range_min, double range_max, 
 		     bool print, bool norm, bool do_reweight, bool REBIN1, bool do_turnon, TString * name_legend, TString extra_name) //, TGraphAsymmErrors * TG_turn)
 // =====================================================================================================
@@ -251,25 +291,41 @@ void draw_comp_histo(TFile * file, TString channel, TFile * OutputFile, TString 
     OutputFile->cd();
 	if (channel == "Zmu")
 		{
-		Int_t n = 6;
+		//cout << "computing Zmu corrections" << endl;
+		Int_t n = 7;
 		TGraph *corr_up;
 		TGraph *corr_down;
+		TH1F *hist = 0;
+		hist = (TH1F*) histo_simu->Clone("fake_rate");
+		//cout << "name?" << endl;
+		TString name = hist->GetName();
+		//cout << "after cloning" << endl;
+		TH1F *hist_up = (TH1F*) hist->Clone(name+"_up");
+		TH1F *hist_down = (TH1F*) hist->Clone(name+"_down");
 
 		Double_t y_up[n], y_down[n];
 		Double_t *x = TG_turn_temp->GetX();
 		Double_t *temp = TG_turn_temp->GetY();
+		//cout << "loop of computation" << endl;
 		for (int i = 1; i <= n; i++)
 			{
 			Float_t val = temp[i-1];
-			y_up[i-1] = val + TG_turn_temp->GetErrorYhigh(i);
-			y_down[i-1] = val - TG_turn_temp->GetErrorYlow(i);
-			cout << "val = " << val << " up = " << y_up[i] << " down = " << y_down[i] << endl;
+			hist->SetBinContent(i,val);
+			y_up[i-1] = val + TG_turn_temp->GetErrorYhigh(i-1);
+			y_down[i-1] = val - TG_turn_temp->GetErrorYlow(i-1);
+			hist_up->SetBinContent(i,y_up[i-1]);
+			hist_down->SetBinContent(i,y_down[i-1]);
+			hist_up->SetBinError(i,0);
+			hist_down->SetBinError(i,0);
+			//cout << "x = " << x[i-1] << " val = " << val << " up = " << y_up[i-1] << " down = " << y_down[i-1] << endl;
 			}
 
 		corr_up = new TGraph(n,x,y_up);
 		corr_down = new TGraph(n,x,y_down);
 		corr_up->Write("Corr_up_"+reduced_name);
 		corr_down->Write("Corr_down_"+reduced_name);
+		//cout << "plot corrections" << endl;
+		plot_correction(hist, hist_up, hist_down, channel, extra_name);
 		}
 
 
@@ -459,44 +515,6 @@ void comp_FRMhits(std::vector<TString> vec_file_name, TString channel, std::vect
 
 
 
-
-// =====================================================================================================
-void plot_correction(TH1F *corr, TH1F *corr_up, TH1F *corr_down, TString channel, TString flag)
-// =====================================================================================================
-{
-
-  TCanvas * canvas = new TCanvas("corr","corr",800,600);
-
-  TLegend *legend = new TLegend(0.1545226,0.6835664,0.3743719,0.8916084,NULL,"");
-  legend->SetTextSize(0.03811252); //(0.035); 
-  legend->SetTextFont(42);
-  legend->SetLineColor(0);
-  legend->SetLineStyle(1);
-  legend->SetLineWidth(1);
-  legend->SetFillColor(0);
-  legend->SetFillStyle(0);
-
-    corr->GetYaxis()->SetRangeUser(0.0,0.5);
-    corr->GetYaxis()->SetTitle("Fake Rate"); //Electron ID Efficiency");
-    corr->GetXaxis()->SetTitle("3^{rd} Lepton p_{T}"); //Electron ID Efficiency");
-    corr->Draw();
-    corr_up->SetLineColor(2);
-    corr_up->Draw("same");
-    corr_down->SetLineColor(3);
-    corr_down->Draw("same");
-
-
-    legend->AddEntry(corr, "Correction","lp");
-    legend->AddEntry(corr_up, "Upper Estimation","lp");
-    legend->AddEntry(corr_down, "Lower Estimation","lp");
-    legend->Draw();
-
-
-  canvas->Print("PLOTS/png/"+ channel + "_fake_rate_correction_" + flag + ".png");
-
-}
-
-
 // ==========================================================================================
 void plot_mhits(TH1F *mhits_EB, TH1F *mhits_EE, TString channel)
 // ==========================================================================================
@@ -655,7 +673,7 @@ void draw_comp_corrFR(TFile* OutputFile, TString channel, TH1F *corr, TString na
   gPad->SetGrid();
 
   TGraph* h_fake = (TGraph*)OutputFile->Get(name_FR); /// vec_fakename_EBEE.at(j));
-  h_fake->GetYaxis()->SetRangeUser(-0.05,0.3);
+  h_fake->GetYaxis()->SetRangeUser(0.0,0.3);
   h_fake->GetXaxis()->SetTitle("3^{rd} Lepton p_{T}"); 
   h_fake->Draw("AP");
 
@@ -829,7 +847,7 @@ void remove_wz(TString data, TString wz, TString channel, TFile *OutputFile, TSt
 
 
 // ==============================================================
-void comp_fake(TString channel = "Ze", TString mode = "rate", TString EXTRA = "80XB")
+void comp_fake(TString channel = "Ze", TString mode = "rate", TString EXTRA = "80XD")
 // ==============================================================
 {
 //==================================================================================================
@@ -851,6 +869,10 @@ remove_wz("Lep3_pT_all_EB_afterMET", "Lep3_pT_all_EB_afterMET", channel, Output,
 remove_wz("Lep3_pT_all_EE_afterMET", "Lep3_pT_all_EE_afterMET", channel, Output, fwz, EXTRA);
 remove_wz("Lep3_pT_all_EB_afterIDISO", "Lep3_pT_all_EB_afterIDISO", channel, Output, fwz, EXTRA);
 remove_wz("Lep3_pT_all_EE_afterIDISO", "Lep3_pT_all_EE_afterIDISO", channel, Output, fwz, EXTRA);
+remove_wz("Lep3_pT2_all_EB_afterMET", "Lep3_pT2_all_EB_afterMET", channel, Output, fwz, EXTRA);
+remove_wz("Lep3_pT2_all_EE_afterMET", "Lep3_pT2_all_EE_afterMET", channel, Output, fwz, EXTRA);
+remove_wz("Lep3_pT2_all_EB_afterIDISO", "Lep3_pT2_all_EB_afterIDISO", channel, Output, fwz, EXTRA);
+remove_wz("Lep3_pT2_all_EE_afterIDISO", "Lep3_pT2_all_EE_afterIDISO", channel, Output, fwz, EXTRA);
 
 Output->Close();
 
@@ -868,6 +890,10 @@ remove_wz("Lep3_pT_all_EB_afterMET", "Lep3_pT_all_EB_afterMET", channel, Output,
 remove_wz("Lep3_pT_all_EE_afterMET", "Lep3_pT_all_EE_afterMET", channel, Output, fwz, EXTRA+"MZ10");
 remove_wz("Lep3_pT_all_EB_afterIDISO", "Lep3_pT_all_EB_afterIDISO", channel, Output, fwz, EXTRA+"MZ10");
 remove_wz("Lep3_pT_all_EE_afterIDISO", "Lep3_pT_all_EE_afterIDISO", channel, Output, fwz, EXTRA+"MZ10");
+remove_wz("Lep3_pT2_all_EB_afterMET", "Lep3_pT2_all_EB_afterMET", channel, Output, fwz, EXTRA+"MZ10");
+remove_wz("Lep3_pT2_all_EE_afterMET", "Lep3_pT2_all_EE_afterMET", channel, Output, fwz, EXTRA+"MZ10");
+remove_wz("Lep3_pT2_all_EB_afterIDISO", "Lep3_pT2_all_EB_afterIDISO", channel, Output, fwz, EXTRA+"MZ10");
+remove_wz("Lep3_pT2_all_EE_afterIDISO", "Lep3_pT2_all_EE_afterIDISO", channel, Output, fwz, EXTRA+"MZ10");
 
 Output->Close();
 
@@ -882,6 +908,10 @@ remove_wz("Lep3_pT_all_EB_afterMET", "Lep3_pT_all_EB_afterMET", channel, Output,
 remove_wz("Lep3_pT_all_EE_afterMET", "Lep3_pT_all_EE_afterMET", channel, Output, fwz, EXTRA+"MZ7");
 remove_wz("Lep3_pT_all_EB_afterIDISO", "Lep3_pT_all_EB_afterIDISO", channel, Output, fwz, EXTRA+"MZ7");
 remove_wz("Lep3_pT_all_EE_afterIDISO", "Lep3_pT_all_EE_afterIDISO", channel, Output, fwz, EXTRA+"MZ7");
+remove_wz("Lep3_pT2_all_EB_afterMET", "Lep3_pT2_all_EB_afterMET", channel, Output, fwz, EXTRA+"MZ7");
+remove_wz("Lep3_pT2_all_EE_afterMET", "Lep3_pT2_all_EE_afterMET", channel, Output, fwz, EXTRA+"MZ7");
+remove_wz("Lep3_pT2_all_EB_afterIDISO", "Lep3_pT2_all_EB_afterIDISO", channel, Output, fwz, EXTRA+"MZ7");
+remove_wz("Lep3_pT2_all_EE_afterIDISO", "Lep3_pT2_all_EE_afterIDISO", channel, Output, fwz, EXTRA+"MZ7");
 
 Output->Close();
 
@@ -897,6 +927,10 @@ remove_wz("Lep3_pT_all_EB_afterMET", "Lep3_pT_all_EB_afterMET", channel, Output,
 remove_wz("Lep3_pT_all_EE_afterMET", "Lep3_pT_all_EE_afterMET", channel, Output, fwz, EXTRA+"MZ60");
 remove_wz("Lep3_pT_all_EB_afterIDISO", "Lep3_pT_all_EB_afterIDISO", channel, Output, fwz, EXTRA+"MZ60");
 remove_wz("Lep3_pT_all_EE_afterIDISO", "Lep3_pT_all_EE_afterIDISO", channel, Output, fwz, EXTRA+"MZ60");
+remove_wz("Lep3_pT2_all_EB_afterMET", "Lep3_pT2_all_EB_afterMET", channel, Output, fwz, EXTRA+"MZ60");
+remove_wz("Lep3_pT2_all_EE_afterMET", "Lep3_pT2_all_EE_afterMET", channel, Output, fwz, EXTRA+"MZ60");
+remove_wz("Lep3_pT2_all_EB_afterIDISO", "Lep3_pT2_all_EB_afterIDISO", channel, Output, fwz, EXTRA+"MZ60");
+remove_wz("Lep3_pT2_all_EE_afterIDISO", "Lep3_pT2_all_EE_afterIDISO", channel, Output, fwz, EXTRA+"MZ60");
 
 Output->Close();
 
@@ -912,6 +946,10 @@ remove_wz("Lep3_pT_all_EB_afterMET", "Lep3_pT_all_EB_afterMET", channel, Output,
 remove_wz("Lep3_pT_all_EE_afterMET", "Lep3_pT_all_EE_afterMET", channel, Output, fwz, EXTRA+"M3L5");
 remove_wz("Lep3_pT_all_EB_afterIDISO", "Lep3_pT_all_EB_afterIDISO", channel, Output, fwz, EXTRA+"M3L5");
 remove_wz("Lep3_pT_all_EE_afterIDISO", "Lep3_pT_all_EE_afterIDISO", channel, Output, fwz, EXTRA+"M3L5");
+remove_wz("Lep3_pT2_all_EB_afterMET", "Lep3_pT2_all_EB_afterMET", channel, Output, fwz, EXTRA+"M3L5");
+remove_wz("Lep3_pT2_all_EE_afterMET", "Lep3_pT2_all_EE_afterMET", channel, Output, fwz, EXTRA+"M3L5");
+remove_wz("Lep3_pT2_all_EB_afterIDISO", "Lep3_pT2_all_EB_afterIDISO", channel, Output, fwz, EXTRA+"M3L5");
+remove_wz("Lep3_pT2_all_EE_afterIDISO", "Lep3_pT2_all_EE_afterIDISO", channel, Output, fwz, EXTRA+"M3L5");
 
 Output->Close();
 
@@ -1016,6 +1054,8 @@ else
     cout << "file name = " << vec_file_name.at(ifile) << " reduced name = " << reduced_name << endl;
     draw_comp_histo(file, channel, OutPutFile,"Lep3_pT_all_EB_afterMET_wzremoved",  "Lep3_pT_all_EB_afterIDISO_wzremoved", rebin_pT, 0,80, PRINT, false, false, 1, true, name_legend, reduced_name);
     draw_comp_histo(file, channel, OutPutFile,"Lep3_pT_all_EE_afterMET_wzremoved",  "Lep3_pT_all_EE_afterIDISO_wzremoved", rebin_pT, 0,80, PRINT, false, false, 1, true, name_legend, reduced_name);
+    //draw_comp_histo(file, channel, OutPutFile,"Lep3_pT2_all_EB_afterMET_wzremoved",  "Lep3_pT2_all_EB_afterIDISO_wzremoved", rebin_pT, 0,80, PRINT, false, false, 1, true, name_legend, reduced_name); //needs to be commented because of muon erros
+    //draw_comp_histo(file, channel, OutPutFile,"Lep3_pT2_all_EE_afterMET_wzremoved",  "Lep3_pT2_all_EE_afterIDISO_wzremoved", rebin_pT, 0,80, PRINT, false, false, 1, true, name_legend, reduced_name); //needs to be commented because of muon errors
 
 
     if(channel=="Ze" or channel == "4e" or channel == "2mu2e" or channel == "Z2e") {

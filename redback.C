@@ -26,6 +26,7 @@
 
 //Category interface
 #include "ZZAnalysis/AnalysisStep/src/Category.cc"
+#include "ZZAnalysis/AnalysisStep/src/cConstants.cc"
 #include "ZZAnalysis/AnalysisStep/interface/FinalStates.h"
 //#include "/home/llr/cms/ochando/CJLST/CMSSW_7416p1_ZX/src/ZZAnalysis/AnalysisStep/interface/bitops.h"
 
@@ -51,7 +52,7 @@ int findBin(double LepPt, double LepId) {
 }
 
 // ========================================================================================================================
-void redback(TString FS = "4e", TString dataset = "ALL", TString mode = "estimate", TString cat = "ALL", TString EXTRA="80XB")
+void redback(TString FS = "4e", TString dataset = "ALL", TString mode = "estimate", TString cat = "ALL", TString EXTRA="80XD")
 // ========================================================================================================================
 {
   cout << "---> Working with Final State : " << FS << endl;
@@ -84,12 +85,18 @@ void redback(TString FS = "4e", TString dataset = "ALL", TString mode = "estimat
 	path_data = "160716";
 	path = "160624";
 	}
+  if(EXTRA.Contains("80XD")>0)
+	{ 
+	lumi = 12.9;
+	path_data = "160725";
+	path = "160720";
+	}
 
 
   if (lumi == 0.0 or path == "")
 	{ cout << "Data taking era not valid!" << endl; return; }
 
-  if( (FS!="4e") && (FS!="4mu")  && (FS!="2e2mu") &&  (FS!="2mu2e") && (FS!="Z2e"))
+  if( (FS!="4e") && (FS!="4mu")  && (FS!="2e2mu") &&  (FS!="2mu2e") && (FS!="Z2e") && (FS!="merge"))
     { cout << " ERROR ! FinalState should be 4e, 4mu, 2e2mu or 2mu2e" << endl; return; }
   
 
@@ -125,12 +132,26 @@ void redback(TString FS = "4e", TString dataset = "ALL", TString mode = "estimat
   TString temp_FS = FS;
   if (FS == "4mu" or FS == "2e2mu") { temp_FS = "Zmu"; }
   if (FS == "Z2e") { temp_FS = "Ze"; }
+  if (FS == "merge") { temp_FS = "merge"; }
   if ((FS == "4e" or FS == "2mu2e") and mode == "final") { temp_FS = "Z2e"; }
   if ((FS == "4e" or FS == "2mu2e") and mode == "estimate") { temp_FS = "Ze"; }
   TString file;
-  file = "histograms/computed_fakerate/"+temp_FS+"/computedfakerate_"+EXTRA+".root"; 
-  cout << "Using fake rates : " << file << endl;
+  TString file2;
+  if (temp_FS != "merge")
+	{
+	file = "histograms/computed_fakerate/"+temp_FS+"/computedfakerate_"+EXTRA+".root";
+	cout << "Using fake rates : " << file << endl;
+	}
+  if (temp_FS == "merge")
+	{
+	file = "histograms/computed_fakerate/Z2e/computedfakerate_"+EXTRA+".root";
+	cout << "Using fake rates : " << file << endl;
+	file2 = "histograms/computed_fakerate/Zmu/computedfakerate_"+EXTRA+".root";
+	cout << "Using fake rates : " << file2 << endl;
+	}
   TFile * f = TFile::Open(file);
+  TFile * f2 = 0;
+  if (temp_FS == "merge") { f2 = TFile::Open(file2); }
   
 
   //double * fakemu_EB = new double[10]; fakemu_EB = h1D_FRmu_EB->GetY();
@@ -140,11 +161,20 @@ void redback(TString FS = "4e", TString dataset = "ALL", TString mode = "estimat
   //cout << "Open Electron" << endl;
   TString fakeEB = "";
   TString fakeEE = "";
+  TString fakeEB2 = "";
+  TString fakeEE2 = "";
   TString fakeEB_up = "";
   TString fakeEE_up = "";
   TString fakeEB_down = "";
   TString fakeEE_down = "";
 
+  if (temp_FS == "merge")
+	{
+  	fakeEB = "CorrFR_TG_Lep3_pT_all_EB_afterMET_wzremoved_ALL_"+EXTRA;
+  	fakeEE = "CorrFR_TG_Lep3_pT_all_EE_afterMET_wzremoved_ALL_"+EXTRA;
+  	fakeEB2 = "TG_Lep3_pT_all_EB_afterMET_wzremoved_ALL_"+EXTRA;
+  	fakeEE2 = "TG_Lep3_pT_all_EE_afterMET_wzremoved_ALL_"+EXTRA;
+	}
   if (temp_FS == "Zmu")
 	{
   	fakeEB = "TG_Lep3_pT_all_EB_afterMET_wzremoved_ALL_"+EXTRA;
@@ -180,6 +210,23 @@ void redback(TString FS = "4e", TString dataset = "ALL", TString mode = "estimat
   //cout << "Tgraphs : " << fakeEB << " " << fakeEE << endl;
   double * fake_EB = h1D_FRel_EB->GetY();
   double * fake_EE = h1D_FRel_EE->GetY();
+
+  double * fake_EB2 = 0;
+  double * fake_EE2 = 0;
+
+  if (temp_FS == "merge")
+	{
+   	TGraph* h1D_FRel_EB2 = 0;
+   	f2->GetObject(fakeEB2,h1D_FRel_EB2);
+   	if (h1D_FRel_EB2 == 0) { cout<< fakeEB2 << " in " << file2 << " not found!" <<endl; return; }
+
+  
+  	TGraph* h1D_FRel_EE2 = (TGraph*)f2->Get(fakeEE2);
+  	//cout << "Tgraphs : " << fakeEB2 << " " << fakeEE2 << endl;
+  	fake_EB2 = h1D_FRel_EB2->GetY();
+  	fake_EE2 = h1D_FRel_EE2->GetY();
+	}
+
 
   double *fake_EB_up = 0;
   double *fake_EE_up = 0;
@@ -410,8 +457,8 @@ if (mode == "final" or temp_FS == "Zmu")
   if (isMC) { mytree->SetBranchAddress("xsec", &xsec, &b_xsec); }
   mytree->SetBranchAddress("pwh_hadronic_VAJHU", &pwh_hadronic_VAJHU, &b_pwh_hadronic_VAJHU);
   mytree->SetBranchAddress("phj_VAJHU", &phj_VAJHU, &b_phj_VAJHU);
-  if (EXTRA.Contains("80XB")>0) { mytree->SetBranchAddress("phjj_VAJHU_highestPTJets", &phjj_VAJHU_highestPTJets, &b_phjj_VAJHU_highestPTJets); }
-  if (EXTRA.Contains("80XB")>0) { mytree->SetBranchAddress("pvbf_VAJHU_highestPTJets", &pvbf_VAJHU_highestPTJets, &b_pvbf_VAJHU_highestPTJets); }
+  if (EXTRA.Contains("80XB")>0 or EXTRA.Contains("80XD")>0) { mytree->SetBranchAddress("phjj_VAJHU_highestPTJets", &phjj_VAJHU_highestPTJets, &b_phjj_VAJHU_highestPTJets); }
+  if (EXTRA.Contains("80XB")>0 or EXTRA.Contains("80XD")>0) { mytree->SetBranchAddress("pvbf_VAJHU_highestPTJets", &pvbf_VAJHU_highestPTJets, &b_pvbf_VAJHU_highestPTJets); }
   if (EXTRA.Contains("80XA")>0 or EXTRA.Contains("76X")>0) { mytree->SetBranchAddress("phjj_VAJHU_old", &phjj_VAJHU_highestPTJets, &b_phjj_VAJHU_highestPTJets); }
   if (EXTRA.Contains("80XA")>0 or EXTRA.Contains("76X")>0) { mytree->SetBranchAddress("pvbf_VAJHU_old", &pvbf_VAJHU_highestPTJets, &b_pvbf_VAJHU_highestPTJets); }
   mytree->SetBranchAddress("pAux_vbf_VAJHU", &pAux_vbf_VAJHU, &b_pAux_vbf_VAJHU);
@@ -560,9 +607,11 @@ if (mode == "final" or temp_FS == "Zmu")
     //Float_t fsROSSS[nFinalStates] = { 1.22, 0.97, 1.30, 0.98 }; 
     if(FS=="4e" && (Z1Flav==-121 && Z2Flav==+121)) { pass_flavor = true; OSSS = 0.97; }
     if(FS=="4mu" && (Z1Flav==-169 && Z2Flav==+169)) { pass_flavor = true; OSSS = 1.22; }
-    if(FS=="2mu2e" && (Z1Flav==-169 && Z2Flav==+121)) { pass_flavor = true; OSSS = 0.98;}
-    if(FS=="2e2mu" && (Z1Flav==-121 && Z2Flav==+169)) { pass_flavor = true; OSSS = 1.3; }
+    if((FS=="2mu2e" or FS=="merge") && (Z1Flav==-169 && Z2Flav==+121)) { pass_flavor = true; OSSS = 0.98;}
+    if((FS=="2e2mu" or FS=="merge") && (Z1Flav==-121 && Z2Flav==+169)) { pass_flavor = true; OSSS = 1.3; }
     if(FS=="Z2e" && Z2Flav==+121) { pass_flavor = true; OSSS = 0.98;}
+    if(FS == "merge" and Z2Flav==+121) OSSS = 0.98;
+    if(FS == "merge" and Z2Flav==+169) OSSS = 1.3;
       // 2e2m = -121 +169
       // 2mu2e = -169 +121
       // 4mu = -169 +169
@@ -598,17 +647,15 @@ if (mode == "final" or temp_FS == "Zmu")
 	{    
 	//cate = categoryIchep16(nExtraLep, nExtraZ, nCleanedJetsPt30, nCleanedJetsPt30BTagged, jetQGL, phjj_VAJHU_highestPTJets, phj_VAJHU, pvbf_VAJHU_highestPTJets, pAux_vbf_VAJHU, pwh_hadronic_VAJHU, pzh_hadronic_VAJHU); //need to be uncommented
 	}
-    if (EXTRA.Contains("80XB")>0)
+    if (EXTRA.Contains("80XB")>0 or EXTRA.Contains("80XD")>0)
 	{
     	for(int j=0; j<nCleanedJetsPt30; j++)
 		{
 		//cout << "j = " << j << endl;
 		jet_phi[j] = JetPhi->at(j);
 		}
-	cate = categoryIchep16(nExtraLep, nExtraZ, nCleanedJetsPt30, nCleanedJetsPt30BTagged, jetQGL, phjj_VAJHU_highestPTJets, phj_VAJHU, pvbf_VAJHU_highestPTJets, pAux_vbf_VAJHU, pwh_hadronic_VAJHU, pzh_hadronic_VAJHU, jet_phi, ZZMass);
+	cate = categoryIchep16(nExtraLep, nExtraZ, nCleanedJetsPt30, nCleanedJetsPt30BTagged, jetQGL, phjj_VAJHU_highestPTJets, phj_VAJHU, pvbf_VAJHU_highestPTJets, pAux_vbf_VAJHU, pwh_hadronic_VAJHU, pzh_hadronic_VAJHU, jet_phi, ZZMass, false);
 	}
-
-
 
     bool passcat = false;
 
@@ -690,7 +737,8 @@ if (mode == "final" or temp_FS == "Zmu")
     double eta_cut = 0;
     if(FS=="4e" or FS=="2mu2e" or FS=="Z2e") eta_cut = 1.479; 
     if(FS=="4mu" || FS=="2e2mu") eta_cut = 1.2; 
-     
+    if(temp_FS == "merge" and Z2Flav==+121) eta_cut = 1.479; 
+    if(temp_FS == "merge" and Z2Flav==+169) eta_cut = 1.2; 
     // TH1F* h_Lep3_mhits[3][8];
     // TH1F* h_Lep4_mhits[3][8];
     // TH1F* h_Lep34_mhits[3][8];
@@ -765,6 +813,10 @@ if (mode == "final" or temp_FS == "Zmu")
       if(fabs(LepEta->at(2+i)) < eta_cut)
 	{
 	fakes[i] = fake_EB[bin];
+	if (temp_FS == "merge" and Z2Flav==+121)
+		{ fakes[i] = fake_EB[bin]; cout << "electron B " << fakes[i] << endl; }
+	if (temp_FS == "merge" and Z2Flav==+169)
+		{ fakes[i] = fake_EB2[bin]; cout << "muon B " << fakes[i] << endl; }
 	if (mode == "final" or temp_FS == "Zmu")
 		{
 		//cout << "problem in EB..." << endl;
@@ -775,6 +827,10 @@ if (mode == "final" or temp_FS == "Zmu")
       else
 	{
 	fakes[i] = fake_EE[bin];
+	if (temp_FS == "merge" and Z2Flav==+121)
+		{ fakes[i] = fake_EE[bin]; cout << "electron E " << fakes[i] << endl; }
+	if (temp_FS == "merge" and Z2Flav==+169)
+		{ fakes[i] = fake_EE2[bin]; cout << "muon E " << fakes[i] << endl; }
 	if (mode == "final" or temp_FS == "Zmu")
 		{
 		//cout << "problem in EE..." << endl;
@@ -806,6 +862,7 @@ if (mode == "final" or temp_FS == "Zmu")
 	{
     	expected_zx_up += temp_zx_up;
     	expected_zx_down += temp_zx_down;
+	//cout << "up = " << expected_zx_up << " down = " << expected_zx_down << endl;
 	}
 
 //if (mode == "final" and temp_FS != "Zmu") { cout << "end of estimation" << endl; }
@@ -826,7 +883,7 @@ if (mode == "final" or temp_FS == "Zmu")
     if(isID==false) continue; cutdes[icut] = " Pass ID"; ICUT->Fill((Float_t)icut,WEIGHT); icut++; 
     if(isISO==false) continue; cutdes[icut] = "Pass ISO"; ICUT->Fill((Float_t)icut,WEIGHT); icut++; 
    
-    
+    //if (FS == "2mu2e" or FS == "2e2mu" or FS == "merge") { cout << iEvt << ":" << temp_zx << end; }
      
      icut_MAX = icut;
      nselected++;
@@ -851,7 +908,7 @@ if (mode == "final" or temp_FS == "Zmu")
   //RooDataSet hZZmass = new RooDataSet("m4l", "m4l", m4l_full, m4l_full->get(), weight.GetName());  
   //RooDataSet hZZmass_fit(hZZmass.GetName(),hZZmass.GetTitle(),RooArgSet(mass),0,w.GetName()) ;
   hZZmass.Print();
-  hZZmass.printTree(std::cout);
+  //hZZmass.printTree(std::cout);
 
   if ((cat == "ALL" or cat == "untagged" or cat == "VBF-1j") and mode == "final")
 	{
@@ -860,7 +917,7 @@ if (mode == "final" or temp_FS == "Zmu")
 	hZZmass.plotOn(frame);
 	hZZmass.statOn(frame);
 	//TF1 *fit; 
-	if (FS == "2mu2e" or FS == "4mu" or FS == "2e2mu") { signal.fitTo(hZZmass,RooFit::SumW2Error(kTRUE)); }
+	if (FS == "2mu2e" or FS == "4mu" or FS == "2e2mu" or FS == "merge") { signal.fitTo(hZZmass,RooFit::SumW2Error(kTRUE)); }
         if (FS == "4e" )
 		{
 		signal.fitTo(hZZmass,RooFit::SumW2Error(kTRUE));

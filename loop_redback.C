@@ -1,6 +1,6 @@
 //Created by Pedro Cipriano
 
-void loop_redback(int mode = 1, TString era = "80XB")
+void loop_redback(int mode = 1, TString era = "80XD")
 	{
 
 	int nmodes = 2;
@@ -10,7 +10,7 @@ void loop_redback(int mode = 1, TString era = "80XB")
 	int ncategories = 7;
 	TString categories[7] = {"ALL", "untagged", "VBF-1j", "VBF-2j", "VH-leptonic", "VH-hadronic", "ttH"};
 	int nsamples = 1;
-	TString samples[5] = {"ALL", "DY50", "TT", "WZ", "ZZ"};
+	TString samples[6] = {"ALL", "DY50", "TT", "WZ", "ZZ",""};
 
 
 	//standard redback loop for all samples and final states

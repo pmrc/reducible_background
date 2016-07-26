@@ -1,6 +1,6 @@
 //Created by Pedro Cipriano
 
-void loop_comp_fake(int mode = 1, TString era = "80XB")
+void loop_comp_fake(int mode = 1, TString era = "80XD")
 	{
 
 	if (mode == 1 or mode == 0)
@@ -10,6 +10,7 @@ void loop_comp_fake(int mode = 1, TString era = "80XB")
 
 		//Z2mu
 		comp_fake("Zmu","rate",era);
+		comp_fake("Zmu","rate",era+"MZ60");
 		}
 
 	if (mode == 2 or mode == 0)

@@ -24,7 +24,7 @@ bool test_bit( int mask, unsigned int iBit ) {
 }
 
 // ========================================================================================================================
-void loopFake(TString FS = "Ze", TString dataset = "ALL", TString branch = "CRZL", TString EXTRA="80XB")
+void loopFake(TString FS = "Ze", TString dataset = "ALL", TString branch = "CRZL", TString EXTRA="80XD")
 // ========================================================================================================================
 {
   cout << "---> Working with Final State:       " << FS << endl;
@@ -58,6 +58,13 @@ void loopFake(TString FS = "Ze", TString dataset = "ALL", TString branch = "CRZL
 	{ 
 	lumi = 7.65;
 	path_data = "160716";
+	path = "160624";
+	}
+
+  if(EXTRA.Contains("80XD")>0)
+	{ 
+	lumi = 12.9;
+	path_data = "160725";
 	path = "160624";
 	}
 
@@ -316,9 +323,11 @@ void loopFake(TString FS = "Ze", TString dataset = "ALL", TString branch = "CRZL
   //   Histo for Lep3
   // ----------------------
   Float_t xbins[8] = {5,7,10,20,30,40,50,80};
+  Float_t xbins2[7] = {5,7,10,20,30,45,80};
   
   TH1F* h_Lep3_Eta[3][3][10]; 
   TH1F* h_Lep3_pT[3][3][10];
+  TH1F* h_Lep3_pT2[3][3][10];
   TH1F* h_Lep3_Iso[3][3][10];
   TH1F* h_Lep3_SIP[3][3][10];
   TH1F* h_Lep3_isID[3][3][10];
@@ -340,8 +349,11 @@ void loopFake(TString FS = "Ze", TString dataset = "ALL", TString branch = "CRZL
       for(int iname=0;iname<4;iname++) {
 	if(EXTRA.Contains("incl")>0) 
 	  h_Lep3_pT[iflavor][iloc][iname] = new TH1F("Lep3_pT_"+flavor[iflavor]+"_"+loc[iloc]+"_"+histo_name[iname], "Lep3_pT_"+flavor[iflavor]+"_"+loc[iloc]+"_"+histo_name[iname]+";Lepon 3 pT;# events",1, 0,80);
-	else 
+	else
+	  {
 	  h_Lep3_pT[iflavor][iloc][iname] = new TH1F("Lep3_pT_"+flavor[iflavor]+"_"+loc[iloc]+"_"+histo_name[iname], "Lep3_pT_"+flavor[iflavor]+"_"+loc[iloc]+"_"+histo_name[iname]+";Lepon 3 pT;# events",7, xbins);
+	  h_Lep3_pT2[iflavor][iloc][iname] = new TH1F("Lep3_pT2_"+flavor[iflavor]+"_"+loc[iloc]+"_"+histo_name[iname], "Lep3_pT2_"+flavor[iflavor]+"_"+loc[iloc]+"_"+histo_name[iname]+";Lepon 3 pT;# events",6, xbins2);
+	  }
 						   //200, 0, 200);
 	h_Lep3_isID[iflavor][iloc][iname] = new TH1F("Lep3_isID_"+flavor[iflavor]+"_"+loc[iloc]+"_"+histo_name[iname], "Lep3_isID_"+flavor[iflavor]+"_"+loc[iloc]+"_"+histo_name[iname]+";Lepon 3 isID;# events",2, 0, 2);
       } // for loop on iname
@@ -538,20 +550,48 @@ void loopFake(TString FS = "Ze", TString dataset = "ALL", TString branch = "CRZL
     //TH1F* h_Lep3_pT[3][3][10]; flavor / loc / cuts
        
     h_Lep3_pT[0][0][0]->Fill(LepPt->at(2), WEIGHT); // all / all / cut0
-    if( fabs(LepEta->at(2))< eta_cut) h_Lep3_pT[0][1][0]->Fill(LepPt->at(2), WEIGHT); // all / EB / cut0
-    else h_Lep3_pT[0][2][0]->Fill(LepPt->at(2), WEIGHT); // all / EE / cut0
-   
-    if(Z1Flav==-121) {
+    h_Lep3_pT2[0][0][0]->Fill(LepPt->at(2), WEIGHT); // all / all / cut0
+    if( fabs(LepEta->at(2))< eta_cut)
+      {
+      h_Lep3_pT[0][1][0]->Fill(LepPt->at(2), WEIGHT); // all / EB / cut0
+      h_Lep3_pT2[0][1][0]->Fill(LepPt->at(2), WEIGHT); // all / EB / cut0
+      }
+    else
+      {
+      h_Lep3_pT[0][2][0]->Fill(LepPt->at(2), WEIGHT); // all / EE / cut0
+      h_Lep3_pT2[0][2][0]->Fill(LepPt->at(2), WEIGHT); // all / EE / cut0   
+      }
+
+    if(Z1Flav==-121)
+      {
       h_Z1_MassEE[0]->Fill(Z1Mass, WEIGHT);
       h_Lep3_pT[1][0][0]->Fill(LepPt->at(2), WEIGHT); // ee / all / cut0
-      if( fabs(LepEta->at(2))< eta_cut) h_Lep3_pT[1][1][0]->Fill(LepPt->at(2), WEIGHT); // ee / EB / cut0
-      else h_Lep3_pT[1][2][0]->Fill(LepPt->at(2), WEIGHT); // ee / EE / cut0
-    } // if Zee
+      h_Lep3_pT2[1][0][0]->Fill(LepPt->at(2), WEIGHT); // ee / all / cut0
+      if (fabs(LepEta->at(2))< eta_cut)
+	{	
+	h_Lep3_pT[1][1][0]->Fill(LepPt->at(2), WEIGHT); // ee / EB / cut0
+	h_Lep3_pT2[1][1][0]->Fill(LepPt->at(2), WEIGHT); // ee / EB / cut0
+	}
+      else
+	{
+	h_Lep3_pT[1][2][0]->Fill(LepPt->at(2), WEIGHT); // ee / EE / cut0
+        h_Lep3_pT2[1][2][0]->Fill(LepPt->at(2), WEIGHT); // ee / EE / cut0
+	}
+      } // if Zee
     else if(Z1Flav==-169) {
       h_Z1_MassMM[0]->Fill(Z1Mass, WEIGHT);
       h_Lep3_pT[2][0][0]->Fill(LepPt->at(2), WEIGHT);  // all / all / cut0
-      if( fabs(LepEta->at(2))< eta_cut) h_Lep3_pT[2][1][0]->Fill(LepPt->at(2), WEIGHT); // mm / EB / cut0
-      else h_Lep3_pT[2][2][0]->Fill(LepPt->at(2), WEIGHT); // mm / EE / cut0
+      h_Lep3_pT2[2][0][0]->Fill(LepPt->at(2), WEIGHT);  // all / all / cut0
+      if( fabs(LepEta->at(2))< eta_cut)
+	{	
+	h_Lep3_pT[2][1][0]->Fill(LepPt->at(2), WEIGHT); // mm / EB / cut0
+	h_Lep3_pT2[2][1][0]->Fill(LepPt->at(2), WEIGHT); // mm / EB / cut0
+	}
+      else
+	{	
+	h_Lep3_pT[2][2][0]->Fill(LepPt->at(2), WEIGHT); // mm / EE / cut0
+	h_Lep3_pT2[2][2][0]->Fill(LepPt->at(2), WEIGHT); // mm / EE / cut0
+	}
     } // if Zmumu
     
     // =========================
@@ -563,21 +603,49 @@ void loopFake(TString FS = "Ze", TString dataset = "ALL", TString branch = "CRZL
     h_PFMET[1]->Fill(PFMET, WEIGHT);
 
      h_Lep3_pT[0][0][1]->Fill(LepPt->at(2), WEIGHT); // all / all / cut0
-    if( fabs(LepEta->at(2))< eta_cut) h_Lep3_pT[0][1][1]->Fill(LepPt->at(2), WEIGHT); // all / EB / cut0
-    else h_Lep3_pT[0][2][1]->Fill(LepPt->at(2), WEIGHT); // all / EE / cut0
+     h_Lep3_pT2[0][0][1]->Fill(LepPt->at(2), WEIGHT); // all / all / cut0
+    if( fabs(LepEta->at(2))< eta_cut)
+	{	
+	h_Lep3_pT[0][1][1]->Fill(LepPt->at(2), WEIGHT); // all / EB / cut0
+	h_Lep3_pT2[0][1][1]->Fill(LepPt->at(2), WEIGHT); // all / EB / cut0
+	}
+    else
+	{
+	h_Lep3_pT[0][2][1]->Fill(LepPt->at(2), WEIGHT); // all / EE / cut0
+	h_Lep3_pT2[0][2][1]->Fill(LepPt->at(2), WEIGHT); // all / EE / cut0
+	}
    
-    if(Z1Flav==-121) {
+    if(Z1Flav==-121)
+      {
       h_Z1_MassEE[1]->Fill(Z1Mass, WEIGHT);
       h_Lep3_pT[1][0][1]->Fill(LepPt->at(2), WEIGHT); // ee / all / cut0
-      if( fabs(LepEta->at(2))< eta_cut) h_Lep3_pT[1][1][1]->Fill(LepPt->at(2), WEIGHT); // ee / EB / cut0
-      else h_Lep3_pT[1][2][1]->Fill(LepPt->at(2), WEIGHT); // ee / EE / cut0
-    } // if Zee
+      h_Lep3_pT2[1][0][1]->Fill(LepPt->at(2), WEIGHT); // ee / all / cut0
+      if( fabs(LepEta->at(2))< eta_cut)
+	{
+	h_Lep3_pT[1][1][1]->Fill(LepPt->at(2), WEIGHT); // ee / EB / cut0
+	h_Lep3_pT2[1][1][1]->Fill(LepPt->at(2), WEIGHT); // ee / EB / cut0
+	}
+      else
+	{
+	h_Lep3_pT[1][2][1]->Fill(LepPt->at(2), WEIGHT); // ee / EE / cut0
+	h_Lep3_pT2[1][2][1]->Fill(LepPt->at(2), WEIGHT); // ee / EE / cut0
+	}
+      } // if Zee
     else if(Z1Flav==-169) {
       h_Z1_MassMM[1]->Fill(Z1Mass, WEIGHT);
       h_Lep3_pT[2][0][1]->Fill(LepPt->at(2), WEIGHT);  // all / all / cut0
-      if( fabs(LepEta->at(2))< eta_cut) h_Lep3_pT[2][1][1]->Fill(LepPt->at(2), WEIGHT); // mm / EB / cut0
-      else h_Lep3_pT[2][2][1]->Fill(LepPt->at(2), WEIGHT); // mm / EE / cut0
-    } // if Zmumu
+      h_Lep3_pT2[2][0][1]->Fill(LepPt->at(2), WEIGHT);  // all / all / cut0
+      if( fabs(LepEta->at(2))< eta_cut)
+	{
+	h_Lep3_pT[2][1][1]->Fill(LepPt->at(2), WEIGHT); // mm / EB / cut0
+	h_Lep3_pT2[2][1][1]->Fill(LepPt->at(2), WEIGHT); // mm / EB / cut0
+	}
+      else
+	{	
+	h_Lep3_pT[2][2][1]->Fill(LepPt->at(2), WEIGHT); // mm / EE / cut0
+	h_Lep3_pT2[2][2][1]->Fill(LepPt->at(2), WEIGHT); // mm / EE / cut0
+	}
+      } // if Zmumu
 
     // =========================
     // Cut on MET
@@ -589,39 +657,48 @@ void loopFake(TString FS = "Ze", TString dataset = "ALL", TString branch = "CRZL
     h_PFMET[2]->Fill(PFMET, WEIGHT);
     
     h_Lep3_pT[0][0][2]->Fill(LepPt->at(2), WEIGHT); // all / all / cut0
+    h_Lep3_pT2[0][0][2]->Fill(LepPt->at(2), WEIGHT); // all / all / cut0
     h_Lep3_isID[0][0][2]->Fill(LepisID->at(2), WEIGHT); 
     if( fabs(LepEta->at(2))< eta_cut) {
       h_Lep3_pT[0][1][2]->Fill(LepPt->at(2), WEIGHT); // all / EB / cut0
+      h_Lep3_pT2[0][1][2]->Fill(LepPt->at(2), WEIGHT); // all / EB / cut0
       h_Lep3_isID[0][1][2]->Fill(LepisID->at(2), WEIGHT); 
     } // BARREL
     else {
       h_Lep3_pT[0][2][2]->Fill(LepPt->at(2), WEIGHT); // all / EE / cut0
+      h_Lep3_pT2[0][2][2]->Fill(LepPt->at(2), WEIGHT); // all / EE / cut0
       h_Lep3_isID[0][2][2]->Fill(LepisID->at(2), WEIGHT); 
     } // ENDCAP
    
     if(Z1Flav==-121) {
       h_Z1_MassEE[2]->Fill(Z1Mass, WEIGHT);
       h_Lep3_pT[1][0][2]->Fill(LepPt->at(2), WEIGHT); // ee / all / cut0
+      h_Lep3_pT2[1][0][2]->Fill(LepPt->at(2), WEIGHT); // ee / all / cut0
       h_Lep3_isID[1][0][2]->Fill(LepisID->at(2), WEIGHT); 
       if( fabs(LepEta->at(2))< eta_cut) {
 	h_Lep3_pT[1][1][2]->Fill(LepPt->at(2), WEIGHT); // ee / EB / cut0
+	h_Lep3_pT2[1][1][2]->Fill(LepPt->at(2), WEIGHT); // ee / EB / cut0
 	h_Lep3_isID[1][1][2]->Fill(LepisID->at(2), WEIGHT); 
       } // BARREL
       else {
 	h_Lep3_pT[1][2][2]->Fill(LepPt->at(2), WEIGHT); // ee / EE / cut0
+	h_Lep3_pT2[1][2][2]->Fill(LepPt->at(2), WEIGHT); // ee / EE / cut0
 	h_Lep3_isID[1][2][2]->Fill(LepisID->at(2), WEIGHT); 
       } // ENDCAP
     } // if Zee
     else if(Z1Flav==-169) {
       h_Z1_MassMM[2]->Fill(Z1Mass, WEIGHT);
       h_Lep3_pT[2][0][2]->Fill(LepPt->at(2), WEIGHT);  // all / all / cut0
+      h_Lep3_pT2[2][0][2]->Fill(LepPt->at(2), WEIGHT);  // all / all / cut0
       h_Lep3_isID[2][0][2]->Fill(LepisID->at(2), WEIGHT); 
       if( fabs(LepEta->at(2))< eta_cut) {
 	h_Lep3_pT[2][1][2]->Fill(LepPt->at(2), WEIGHT); // mm / EB / cut0
+	h_Lep3_pT2[2][1][2]->Fill(LepPt->at(2), WEIGHT); // mm / EB / cut0
 	h_Lep3_isID[2][1][2]->Fill(LepisID->at(2), WEIGHT); 
       } // BARREL
       else {
 	h_Lep3_pT[2][2][2]->Fill(LepPt->at(2), WEIGHT); // mm / EE / cut0
+	h_Lep3_pT2[2][2][2]->Fill(LepPt->at(2), WEIGHT); // mm / EE / cut0
 	h_Lep3_isID[2][2][2]->Fill(LepisID->at(2), WEIGHT); 
       } // ENDCAP
     } // if Zmumu
@@ -668,19 +745,23 @@ void loopFake(TString FS = "Ze", TString dataset = "ALL", TString branch = "CRZL
     h_PFMET[3]->Fill(PFMET, WEIGHT);
     
     h_Lep3_pT[0][0][3]->Fill(LepPt->at(2), WEIGHT); // all / all / cut0
+    h_Lep3_pT2[0][0][3]->Fill(LepPt->at(2), WEIGHT); // all / all / cut0
     h_Lep3_isID[0][0][3]->Fill(LepisID->at(2), WEIGHT); 
     if( fabs(LepEta->at(2))< eta_cut) {
       h_Lep3_pT[0][1][3]->Fill(LepPt->at(2), WEIGHT); // all / EB / cut0
+      h_Lep3_pT2[0][1][3]->Fill(LepPt->at(2), WEIGHT); // all / EB / cut0
       h_Lep3_isID[0][1][3]->Fill(LepisID->at(2), WEIGHT); 
     } // BARREL
     else {
       h_Lep3_pT[0][2][3]->Fill(LepPt->at(2), WEIGHT); // all / EE / cut0
+      h_Lep3_pT2[0][2][3]->Fill(LepPt->at(2), WEIGHT); // all / EE / cut0
       h_Lep3_isID[0][2][3]->Fill(LepisID->at(2), WEIGHT); 
     } // ENDCAP
    
     if(Z1Flav==-121) {
       h_Z1_MassEE[3]->Fill(Z1Mass, WEIGHT);
       h_Lep3_pT[1][0][3]->Fill(LepPt->at(2), WEIGHT); // ee / all / cut0
+      h_Lep3_pT2[1][0][3]->Fill(LepPt->at(2), WEIGHT); // ee / all / cut0
       h_Lep3_isID[1][0][3]->Fill(LepisID->at(2), WEIGHT); 
       if( fabs(LepEta->at(2))< eta_cut) {
 	h_Lep3_pT[1][1][3]->Fill(LepPt->at(2), WEIGHT); // ee / EB / cut0
@@ -688,19 +769,23 @@ void loopFake(TString FS = "Ze", TString dataset = "ALL", TString branch = "CRZL
       } // BARREL
       else {
 	h_Lep3_pT[1][2][3]->Fill(LepPt->at(2), WEIGHT); // ee / EE / cut0
+	h_Lep3_pT2[1][2][3]->Fill(LepPt->at(2), WEIGHT); // ee / EE / cut0
 	h_Lep3_isID[1][2][3]->Fill(LepisID->at(2), WEIGHT); 
       } // ENDCAP
     } // if Zee
     else if(Z1Flav==-169) {
       h_Z1_MassMM[3]->Fill(Z1Mass, WEIGHT);
       h_Lep3_pT[2][0][3]->Fill(LepPt->at(2), WEIGHT);  // all / all / cut0
+      h_Lep3_pT2[2][0][3]->Fill(LepPt->at(2), WEIGHT);  // all / all / cut0
       h_Lep3_isID[2][0][3]->Fill(LepisID->at(2), WEIGHT); 
       if( fabs(LepEta->at(2))< eta_cut) {
 	h_Lep3_pT[2][1][3]->Fill(LepPt->at(2), WEIGHT); // mm / EB / cut0
+	h_Lep3_pT2[2][1][3]->Fill(LepPt->at(2), WEIGHT); // mm / EB / cut0
 	h_Lep3_isID[2][1][3]->Fill(LepisID->at(2), WEIGHT); 
       } // BARREL
       else {
 	h_Lep3_pT[2][2][3]->Fill(LepPt->at(2), WEIGHT); // mm / EE / cut0
+	h_Lep3_pT2[2][2][3]->Fill(LepPt->at(2), WEIGHT); // mm / EE / cut0
 	h_Lep3_isID[2][2][3]->Fill(LepisID->at(2), WEIGHT); 
       } // ENDCAP
     } // if Zmumu
@@ -734,6 +819,7 @@ void loopFake(TString FS = "Ze", TString dataset = "ALL", TString branch = "CRZL
       
       for(int iname=0;iname<4;iname++) {
 	h_Lep3_pT[iflavor][iloc][iname]->Write();
+	h_Lep3_pT2[iflavor][iloc][iname]->Write();
 	h_Lep3_isID[iflavor][iloc][iname]->Write();
       } // for loop on iname
     } // for loop in iloc

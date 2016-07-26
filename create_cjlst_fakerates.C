@@ -10,7 +10,7 @@
 #include <TString.h>
 
 
-void create_cjlst_fakerates(TString era = "80XB")
+void create_cjlst_fakerates(TString era = "80XD")
 {
 
 TString year = "";
@@ -18,6 +18,7 @@ TString year = "";
 if (era.Contains("76X")>0) { year = "2015"; }
 if (era.Contains("80XA")>0) { year = "2016A"; }
 if (era.Contains("80XB")>0) { year = "2016B"; }
+if (era.Contains("80XD")>0) { year = "2016D"; }
 
 TString output_name = "histograms/computed_fakerate/FakeRate_SS_"+year+".root";
 TFile *OutPutFile = new TFile(output_name,"RECREATE","",0); 
